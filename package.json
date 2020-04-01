@@ -1,0 +1,48 @@
+{
+  "name": "@magical-forms/monorepo",
+  "private": true,
+  "version": "0.0.1",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "preconstruct dev && manypkg check",
+    "changeset": "changeset",
+    "release": "preconstruct build && changeset publish",
+    "start": "cd test-app && yarn next dev",
+    "test": "jest"
+  },
+  "preconstruct": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "workspaces": [
+    "packages/*",
+    "test-app"
+  ],
+  "dependencies": {
+    "@babel/cli": "^7.5.0",
+    "@babel/core": "^7.5.0",
+    "@babel/plugin-proposal-class-properties": "^7.5.0",
+    "@babel/plugin-transform-runtime": "^7.6.2",
+    "@babel/preset-env": "^7.5.0",
+    "@babel/preset-react": "^7.0.0",
+    "@babel/preset-typescript": "^7.3.3",
+    "@changesets/changelog-github": "^0.1.1",
+    "@changesets/cli": "^2.4.0",
+    "@emotion/core": "^10.0.22",
+    "@manypkg/cli": "^0.9.0",
+    "@preconstruct/cli": "^1.1.4",
+    "@testing-library/react": "^8.0.4",
+    "@types/babel__core": "^7.1.2",
+    "@types/jest": "^24.0.15",
+    "@types/react": "^16.8.23",
+    "@types/react-dom": "^16.8.4",
+    "babel-jest": "^24.8.0",
+    "jest": "^24.8.0",
+    "jest-emotion": "^10.0.17",
+    "jest-in-case": "^1.0.2",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "typescript": "^3.7.2"
+  }
+}
