@@ -65,6 +65,18 @@ export type Form<
   ? Input
   : never;
 
+export type ValidatedFormValue<
+  FormField extends Field<any, any, any, any, any, any>
+> = FormField extends Field<any, any, any, any, infer ValidatedValue, any>
+  ? ValidatedValue
+  : never;
+
+export type FormValidationError<
+  FormField extends Field<any, any, any, any, any, any>
+> = FormField extends Field<any, any, any, any, any, infer FormValidationError>
+  ? FormValidationError
+  : never;
+
 type ValidationFn<Value, ValidatedValue, ValidationError> = (
   value: Value
 ) =>
@@ -140,7 +152,13 @@ type ObjectFieldMapToField<
     ValidatedValue,
     ValidationError
   >,
-  {},
+  {
+    fields: {
+      readonly [Key in keyof ObjectFieldMap]: ReturnType<
+        ObjectFieldMap[Key]["getInitialMeta"]
+      >;
+    };
+  },
   ValidatedValue,
   ValidationError
 >;
@@ -184,7 +202,8 @@ type ArrayField<
   {
     readonly props: {
       readonly value: FormValue<InternalField>[];
-      readonly onChange: (value: FormValue<InternalField>[]) => void;
+      readonly add: (value: FormValue<InternalField>) => void;
+      readonly remove: (index: number) => void;
     };
     readonly items: Form<InternalField>[];
   } & ValidationResult<
@@ -192,7 +211,9 @@ type ArrayField<
     ValidatedValue,
     ValidationError
   >,
-  {},
+  {
+    items: ReturnType<InternalField["getInitialMeta"]>[];
+  },
   ValidatedValue,
   ValidationError
 >;
@@ -200,16 +221,35 @@ type ArrayField<
 export const field = {
   object<
     ObjectFieldMap extends ObjectFieldBase,
-    ValidatedValue,
+    ValidatedValue extends {
+      readonly [Key in keyof ObjectFieldMap]: ReturnType<
+        ObjectFieldMap[Key]["getInitialValue"]
+      >;
+    },
     ValidationError
   >(
-    fields: ObjectFieldMap
+    fields: ObjectFieldMap,
+    {
+      validate,
+    }: {
+      validate: (
+        result: {
+          readonly [Key in keyof ObjectFieldMap]: ValidationResult<
+            FormValue<ObjectFieldMap[Key]>,
+            ValidatedFormValue<ObjectFieldMap[Key]>,
+            FormValidationError<ObjectFieldMap[Key]>
+          >;
+        }
+      ) =>
+        | { validity: "valid"; value: ValidatedValue }
+        | { validity: "error"; error: ValidationError };
+    }
   ): ObjectFieldMapToField<ObjectFieldMap, ValidatedValue, ValidationError> {
     return {
       getField(input) {
         return {
           ...input,
-          props: input,
+          props: { value: input.value, onChange: input.setValue },
           fields: mapObj(fields, (sourceKey, sourceValue) => [
             // @ts-ignore
             sourceKey,
@@ -218,8 +258,14 @@ export const field = {
               setValue: (val: any) => {
                 input.setValue({ ...input.value, [sourceKey]: val });
               },
-              meta: input.meta,
-              setMeta: input.setMeta,
+              meta: input.meta.fields[sourceKey],
+              setMeta: (val: any) => {
+                input.setMeta({
+                  fields: { ...input.meta.fields, [sourceKey]: val },
+                });
+              },
+              validity: "valid",
+              error: undefined,
             }),
           ]),
         };
@@ -230,7 +276,14 @@ export const field = {
           sourceKey,
           sourceValue.getInitialValue(initialValue[sourceKey]),
         ]),
-      getInitialMeta: () => ({}),
+      getInitialMeta: (value) => ({
+        fields: mapObj(fields, (sourceKey, sourceValue) => [
+          // @ts-ignore
+          sourceKey,
+          sourceValue.getInitialValue(value[sourceKey]),
+        ]),
+      }),
+      validate: (value) => {},
     };
   },
   date: <ValidatedValue, ValidationError>({
@@ -387,7 +440,7 @@ export const field = {
     }),
   array: <
     InternalField extends Field<any, any, any, any, any, any>,
-    ValidatedValue,
+    ValidatedValue extends FormValue<InternalField>[],
     ValidationError
   >(
     internalField: InternalField,
@@ -405,16 +458,26 @@ export const field = {
       getField(input) {
         return {
           ...input,
-          props: { value: input.value, onChange: input.setValue },
+          props: {
+            value: input.value,
+            add(value) {
+              input.setValue(input.value.concat([value]));
+            },
+            remove(index) {
+              let val = [...input.value];
+              val.splice(index, 1);
+              input.setValue(val);
+            },
+          },
           items: input.value.map((internalValue, index) => {
             return internalField.getField({
-              value: internalValue,
-              setValue(newInternalValue: FieldValue) {
+              ...runValidationFunction(internalField.validate, internalValue),
+              setValue(newInternalValue) {
                 let newVal = [...input.value];
                 newVal[index] = newInternalValue;
                 input.setValue(newVal);
               },
-              meta: input.meta,
+              meta: input.meta.items[index],
               setMeta: input.setMeta,
             });
           }),
@@ -424,7 +487,7 @@ export const field = {
         return initialValueInput.map((x) => internalField.getInitialValue(x));
       },
       getInitialMeta: (value) => ({
-        itemsMeta: value.map((x) => internalField.getInitialMeta(x)),
+        items: value.map((x) => internalField.getInitialMeta(x)),
       }),
       validate,
     };

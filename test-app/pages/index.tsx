@@ -10,12 +10,14 @@ import {
 } from "@magical-forms/react";
 import { RawTypes } from "@magical-types/macro/write-data-to-fs.macro";
 
-let textForm = field.text({
-  validate: (value) => {
-    if (value === undefined) return validation.invalid("thing");
-    return validation.valid(value);
-  },
-});
+let textForm = field.array(
+  field.text({
+    validate: (value) => {
+      if (value === undefined) return validation.invalid("thing");
+      return validation.valid(value);
+    },
+  })
+);
 
 export default function Index() {
   let form = useForm(textForm);
