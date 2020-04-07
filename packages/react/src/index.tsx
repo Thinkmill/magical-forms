@@ -1,7 +1,26 @@
 import { ChangeEvent, useState } from "react";
 import mapObj from "map-obj";
 
-export function useForm<FormField extends Field<any, any, any, any>>(
+function runValidationFunction<Value, ValidationError, ValidatedValue = Value>(
+  validationFn: ValidationFn<Value, ValidatedValue, ValidationError>,
+  value: Value
+): ValidationResult<Value, ValidatedValue, ValidationError> {
+  let result = validationFn(value);
+  if (result.validity === "valid") {
+    return {
+      validity: "valid",
+      value: result.value,
+      error: undefined,
+    };
+  }
+  return {
+    validity: "invalid" as const,
+    value,
+    error: result.error,
+  };
+}
+
+export function useForm<FormField extends Field<any, any, any, any, any, any>>(
   field: FormField,
   initialValue?: InitialFieldValueInput<FormField>
 ): ReturnType<FormField["getField"]> {
@@ -9,7 +28,7 @@ export function useForm<FormField extends Field<any, any, any, any>>(
   let [meta, setMeta] = useState(() => field.getInitialMeta(value));
 
   return field.getField({
-    value,
+    ...runValidationFunction(field.validate, value),
     setValue: (val) => {
       setValue(() => val);
     },
@@ -29,34 +48,64 @@ export const validation = {
   },
 };
 
-export type BasicFieldInput<FieldValue, Meta> = {
-  value: FieldValue;
+export type BasicFieldInput<
+  FieldValue,
+  Meta,
+  ValidatedValue,
+  ValidationError
+> = {
   setValue: (value: FieldValue) => void;
   meta: Meta;
   setMeta: (value: Meta) => void;
-};
+} & ValidationResult<FieldValue, ValidatedValue, ValidationError>;
 
 export type Form<
-  FormField extends Field<any, any, any, any>
-> = FormField extends Field<any, any, infer Input, any> ? Input : never;
+  FormField extends Field<any, any, any, any, any, any>
+> = FormField extends Field<any, any, infer Input, any, any, any>
+  ? Input
+  : never;
 
-export type FormValue<FormField extends Field<any, any, any, any>> = ReturnType<
-  FormField["getInitialValue"]
->;
+type ValidationFn<Value, ValidatedValue, ValidationError> = (
+  value: Value
+) =>
+  | { validity: "valid"; value: ValidatedValue }
+  | { validity: "invalid"; error: ValidationError };
+
+export type FormValue<
+  FormField extends Field<any, any, any, any, any, any>
+> = ReturnType<FormField["getInitialValue"]>;
 
 export type InitialFieldValueInput<
-  FormField extends Field<any, any, any, any>
+  FormField extends Field<any, any, any, any, any, any>
 > = Parameters<FormField["getInitialValue"]>[0];
 
-type Field<Value, InitialFieldValueInputType, Input, Meta> = {
+type ValidationResult<Value, ValidatedValue, ValidationError> =
+  | { validity: "valid"; value: ValidatedValue; error: undefined }
+  | { validity: "invalid"; value: Value; error: ValidationError };
+
+type Field<
+  Value,
+  InitialFieldValueInputType,
+  Input extends ValidationResult<Value, ValidatedValue, ValidationError>,
+  Meta,
+  ValidatedValue,
+  ValidationError
+> = {
   getInitialValue: (initialValueInput: InitialFieldValueInputType) => Value;
   getInitialMeta: (value: Value) => Meta;
-  getField: (input: BasicFieldInput<Value, Meta>) => Input;
+  getField: (
+    input: BasicFieldInput<Value, Meta, ValidatedValue, ValidationError>
+  ) => Input;
+  validate: ValidationFn<Value, ValidatedValue, ValidationError>;
 };
 
-type ObjectFieldBase = { [key: string]: Field<any, any, any, any> };
+type ObjectFieldBase = { [key: string]: Field<any, any, any, any, any, any> };
 
-type ObjectFieldMapToField<ObjectFieldMap extends ObjectFieldBase> = Field<
+type ObjectFieldMapToField<
+  ObjectFieldMap extends ObjectFieldBase,
+  ValidatedValue,
+  ValidationError
+> = Field<
   {
     readonly [Key in keyof ObjectFieldMap]: FormValue<ObjectFieldMap[Key]>;
   },
@@ -67,44 +116,95 @@ type ObjectFieldMapToField<ObjectFieldMap extends ObjectFieldBase> = Field<
     }
   | undefined,
   {
-    readonly props: BasicFieldInput<
-      {
+    readonly props: {
+      value: {
         readonly [Key in keyof ObjectFieldMap]: FormValue<ObjectFieldMap[Key]>;
-      },
-      {}
-    >;
+      };
+      onChange(
+        value: {
+          readonly [Key in keyof ObjectFieldMap]: FormValue<
+            ObjectFieldMap[Key]
+          >;
+        }
+      ): void;
+    };
     readonly fields: {
       readonly [Key in keyof ObjectFieldMap]: ReturnType<
         ObjectFieldMap[Key]["getField"]
       >;
     };
-  },
-  {}
+  } & ValidationResult<
+    {
+      readonly [Key in keyof ObjectFieldMap]: FormValue<ObjectFieldMap[Key]>;
+    },
+    ValidatedValue,
+    ValidationError
+  >,
+  {},
+  ValidatedValue,
+  ValidationError
 >;
 
-export function makeField<FormField>(field: FormField): FormField {
+export function makeField<
+  Value,
+  InitialFieldValueInputType,
+  Input extends ValidationResult<Value, ValidatedValue, ValidationError>,
+  Meta,
+  ValidatedValue,
+  ValidationError
+>(
+  field: Field<
+    Value,
+    InitialFieldValueInputType,
+    Input,
+    Meta,
+    ValidatedValue,
+    ValidationError
+  >
+): Field<
+  Value,
+  InitialFieldValueInputType,
+  Input,
+  Meta,
+  ValidatedValue,
+  ValidationError
+> {
   return field;
 }
 
-type ArrayField<FieldValue, InitialFieldValueInputType, FieldInput> = Field<
-  FieldValue[],
+type ArrayField<
+  InternalField extends Field<any, any, any, any, any, any>,
+  ValidatedValue,
+  ValidationError
+> = Field<
+  FormValue<InternalField>[],
   // TODO: think about this some more
   // I'm not sure if this is correct
-  InitialFieldValueInputType[] | undefined,
+  InitialFieldValueInput<InternalField>[] | undefined,
   {
     readonly props: {
-      readonly value: FieldValue[];
-      readonly onChange: (value: FieldValue[]) => void;
+      readonly value: FormValue<InternalField>[];
+      readonly onChange: (value: FormValue<InternalField>[]) => void;
     };
-    readonly items: FieldInput[];
-  },
-  {}
+    readonly items: Form<InternalField>[];
+  } & ValidationResult<
+    FormValue<InternalField>[],
+    ValidatedValue,
+    ValidationError
+  >,
+  {},
+  ValidatedValue,
+  ValidationError
 >;
 
 export const field = {
-  object<ObjectFieldMap extends ObjectFieldBase>(
+  object<
+    ObjectFieldMap extends ObjectFieldBase,
+    ValidatedValue,
+    ValidationError
+  >(
     fields: ObjectFieldMap
-  ): ObjectFieldMapToField<ObjectFieldMap> {
+  ): ObjectFieldMapToField<ObjectFieldMap, ValidatedValue, ValidationError> {
     return {
       getField(input) {
         return {
@@ -133,102 +233,174 @@ export const field = {
       getInitialMeta: () => ({}),
     };
   },
-  date: makeField({
-    getField: (input: BasicFieldInput<Date | undefined, {}>) => ({
-      ...input,
-      props: { value: input.value, onChange: input.setValue },
+  date: <ValidatedValue, ValidationError>({
+    validate,
+  }: {
+    validate: ValidationFn<Date | undefined, ValidatedValue, ValidationError>;
+  }) =>
+    makeField({
+      getField(input) {
+        return {
+          ...input,
+          props: { value: input.value, onChange: input.setValue },
+        };
+      },
+      getInitialValue: (initialValueInput: Date | undefined) =>
+        initialValueInput,
+      getInitialMeta: () => ({ touched: false }),
+      validate,
     }),
-    getInitialValue: (initialValueInput: Date | undefined) => initialValueInput,
-    getInitialMeta: () => ({}),
-  }),
-  string: makeField({
-    getField: (input: BasicFieldInput<string, {}>) => ({
-      ...input,
-      props: { value: input.value, onChange: input.setValue },
+  string: <ValidatedValue, ValidationError>({
+    validate,
+  }: {
+    validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
+  }) =>
+    makeField({
+      getField(input) {
+        return {
+          ...input,
+          props: { value: input.value, onChange: input.setValue },
+        };
+      },
+      getInitialValue: (initialValueInput: string | undefined) =>
+        initialValueInput,
+      getInitialMeta: () => ({}),
+      validate,
     }),
-    getInitialValue: (initialValueInput: string | undefined = "") =>
-      initialValueInput,
-    getInitialMeta: () => ({}),
-  }),
-  dateRange: makeField({
-    getField: (input: BasicFieldInput<{ from?: Date; to?: Date }, {}>) => ({
-      ...input,
-      props: { value: input.value, onChange: input.setValue },
+  dateRange: <ValidatedValue, ValidationError>({
+    validate,
+  }: {
+    validate: ValidationFn<
+      { from?: Date; to?: Date } | undefined,
+      ValidatedValue,
+      ValidationError
+    >;
+  }) =>
+    makeField({
+      getField(input) {
+        return {
+          ...input,
+          props: { value: input.value, onChange: input.setValue },
+        };
+      },
+      getInitialValue: (
+        initialValueInput: { from?: Date; to?: Date } | undefined
+      ) => initialValueInput || { from: undefined, to: undefined },
+      getInitialMeta: () => {
+        return {
+          touched: false,
+        };
+      },
+      validate,
     }),
-    getInitialValue: (
-      initialValueInput: { from?: Date; to?: Date } | undefined
-    ) => initialValueInput || { from: undefined, to: undefined },
-    getInitialMeta: () => {
-      return {
+  text: <ValidatedValue, ValidationError>({
+    validate,
+  }: {
+    validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
+  }) =>
+    makeField({
+      getField(input) {
+        return {
+          ...input,
+          props: {
+            value: input.value,
+            onChange(event: ChangeEvent<HTMLInputElement>) {
+              input.setValue(event.target.value);
+            },
+          },
+        };
+      },
+      getInitialValue: (initialValueInput: string | undefined) =>
+        initialValueInput,
+      getInitialMeta: () => ({
         touched: false,
         validity: "invalid",
-        __mutable: {},
-      };
-    },
-  }),
-  text: makeField({
-    getField: (input: BasicFieldInput<string | undefined, {}>) => ({
-      ...input,
-      props: {
-        value: input.value,
-        onChange(event: ChangeEvent<HTMLInputElement>) {
-          input.setValue(event.target.value);
-        },
+      }),
+      validate,
+    }),
+  number: <ValidatedValue, ValidationError>({
+    validate,
+  }: {
+    validate: ValidationFn<number | undefined, ValidatedValue, ValidationError>;
+  }) =>
+    makeField({
+      getField(input) {
+        return {
+          ...input,
+          props: {
+            value: input.value,
+            onChange(event: ChangeEvent<HTMLInputElement>) {
+              let number = Number(event.target.value);
+              input.setValue(isNaN(number) ? undefined : number);
+            },
+          },
+        };
       },
+      getInitialValue: (initialValueInput: number | undefined) =>
+        initialValueInput,
+      getInitialMeta: () => ({}),
+      validate,
     }),
-    getInitialValue: (initialValueInput: string | undefined) =>
-      initialValueInput,
-    getInitialMeta: () => ({
-      touched: false,
-      validity: "invalid",
-    }),
-  }),
-  number: makeField({
-    getField: (input: BasicFieldInput<number | undefined, {}>) => ({
-      ...input,
-      props: {
-        value: input.value,
-        onChange(event: ChangeEvent<HTMLInputElement>) {
-          let number = Number(event.target.value);
-          input.setValue(isNaN(number) ? undefined : number);
-        },
+  select: <ValidatedValue, ValidationError>({
+    validate,
+  }: {
+    validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
+  }) =>
+    makeField({
+      getField(input) {
+        return {
+          ...input,
+          props: {
+            value: input.value,
+            onChange(event: ChangeEvent<HTMLSelectElement>) {
+              input.setValue(event.target.value);
+            },
+          },
+        };
       },
+      getInitialValue: (initialValueInput: string | undefined) =>
+        initialValueInput,
+      getInitialMeta: () => ({}),
+      validate,
     }),
-    getInitialValue: (initialValueInput: number | undefined) =>
-      initialValueInput,
-    getInitialMeta: () => ({}),
-  }),
-  select: makeField({
-    getField: (input: BasicFieldInput<string | undefined, {}>) => ({
-      ...input,
-      props: {
-        value: input.value,
-        onChange(event: ChangeEvent<HTMLSelectElement>) {
-          input.setValue(event.target.value);
-        },
+  checkbox: <ValidatedValue, ValidationError>({
+    validate,
+  }: {
+    validate: ValidationFn<boolean, ValidatedValue, ValidationError>;
+  }) =>
+    makeField({
+      getField(input) {
+        return {
+          ...input,
+          props: {
+            checked: input.value,
+            onChange(event: ChangeEvent<HTMLInputElement>) {
+              input.setValue(event.target.checked);
+            },
+          },
+        };
       },
+      getInitialValue: (initialValueInput: boolean | undefined = false) =>
+        initialValueInput,
+      getInitialMeta: () => ({}),
+      validate,
     }),
-    getInitialValue: (initialValueInput: string | undefined) =>
-      initialValueInput,
-    getInitialMeta: () => ({}),
-  }),
-  checkbox: makeField({
-    getField: (input: BasicFieldInput<boolean, {}>) => ({
-      ...input,
-      props: {
-        checked: input.value,
-        onChange(event: ChangeEvent<HTMLInputElement>) {
-          input.setValue(event.target.checked);
-        },
-      },
-    }),
-    getInitialValue: (initialValueInput: boolean | undefined = false) =>
-      initialValueInput,
-    getInitialMeta: () => ({}),
-  }),
-  array: <FieldValue, InitialFieldValueInputType, FieldInput>(
-    internalField: Field<FieldValue, InitialFieldValueInputType, FieldInput, {}>
-  ): ArrayField<FieldValue, InitialFieldValueInputType, FieldInput> => {
+  array: <
+    InternalField extends Field<any, any, any, any, any, any>,
+    ValidatedValue,
+    ValidationError
+  >(
+    internalField: InternalField,
+    {
+      validate,
+    }: {
+      validate: ValidationFn<
+        FormValue<InternalField>[],
+        ValidatedValue,
+        ValidationError
+      >;
+    }
+  ): ArrayField<InternalField, ValidatedValue, ValidationError> => {
     return {
       getField(input) {
         return {
@@ -251,7 +423,10 @@ export const field = {
       getInitialValue: (initialValueInput = []) => {
         return initialValueInput.map((x) => internalField.getInitialValue(x));
       },
-      getInitialMeta: () => ({}),
+      getInitialMeta: (value) => ({
+        itemsMeta: value.map((x) => internalField.getInitialMeta(x)),
+      }),
+      validate,
     };
   },
 };
