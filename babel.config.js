@@ -1,12 +1,12 @@
 module.exports = {
   presets: [
-    "@babel/preset-env",
-    "@babel/preset-typescript",
-    "@babel/preset-react",
+    require.resolve("@babel/preset-env"),
+    require.resolve("@babel/preset-typescript"),
+    require.resolve("@babel/preset-react"),
   ],
   plugins: [
-    "@babel/plugin-transform-runtime",
-    "@babel/plugin-proposal-class-properties",
-    "babel-plugin-macros",
+    require.resolve("@babel/plugin-transform-runtime"),
+    require.resolve("@babel/plugin-proposal-class-properties"),
+    require.resolve("babel-plugin-macros"),
   ],
 };

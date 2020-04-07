@@ -1,6 +1,6 @@
-import mapObj from "map-obj";
+import { mapObject } from "./map-obj";
 
-import type {
+import {
   Field,
   FormValue,
   InitialFieldValueInput,
@@ -8,6 +8,7 @@ import type {
   ValidatedFormValue,
   FormValidationError,
 } from "./types";
+import { runValidationFunction } from "./validation";
 
 type ObjectFieldBase = { [key: string]: Field<any, any, any, any, any, any> };
 
@@ -84,7 +85,7 @@ export function object<
       }
     ) =>
       | { validity: "valid"; value: ValidatedValue }
-      | { validity: "error"; error: ValidationError };
+      | { validity: "invalid"; error: ValidationError };
   }
 ): ObjectFieldMapToField<ObjectFieldMap, ValidatedValue, ValidationError> {
   return {
@@ -92,11 +93,12 @@ export function object<
       return {
         ...input,
         props: { value: input.value, onChange: input.setValue },
-        fields: mapObj(fields, (sourceKey, sourceValue) => [
-          // @ts-ignore
-          sourceKey,
+        fields: mapObject(fields, (sourceKey, sourceValue) =>
           sourceValue.getField({
-            value: input.value[sourceKey],
+            ...runValidationFunction(
+              sourceValue.validate,
+              input.value[sourceKey]
+            ),
             setValue: (val: any) => {
               input.setValue({ ...input.value, [sourceKey]: val });
             },
@@ -106,25 +108,25 @@ export function object<
                 fields: { ...input.meta.fields, [sourceKey]: val },
               });
             },
-            validity: "valid",
-            error: undefined,
-          }),
-        ]),
+          })
+        ),
       };
     },
     getInitialValue: (initialValue = {}) =>
-      mapObj(fields, (sourceKey, sourceValue) => [
-        // @ts-ignore
-        sourceKey,
-        sourceValue.getInitialValue(initialValue[sourceKey]),
-      ]),
+      mapObject(fields, (sourceKey, sourceValue) =>
+        sourceValue.getInitialValue(initialValue[sourceKey])
+      ),
     getInitialMeta: (value) => ({
-      fields: mapObj(fields, (sourceKey, sourceValue) => [
-        // @ts-ignore
-        sourceKey,
-        sourceValue.getInitialValue(value[sourceKey]),
-      ]),
+      fields: mapObject(fields, (sourceKey, sourceValue) =>
+        sourceValue.getInitialValue(value[sourceKey])
+      ),
     }),
-    validate: (value) => {},
+    validate: (value) => {
+      return validate(
+        mapObject(fields, (sourceKey, sourceValue) =>
+          runValidationFunction(sourceValue.validate, value[sourceKey])
+        )
+      );
+    },
   };
 }

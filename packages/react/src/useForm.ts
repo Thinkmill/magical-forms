@@ -1,4 +1,4 @@
-import type { InitialFieldValueInput, Field } from "./types";
+import { InitialFieldValueInput, Field } from "./types";
 import { useState } from "react";
 import { runValidationFunction } from "./validation";
 

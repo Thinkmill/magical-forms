@@ -1,4 +1,4 @@
-import type { ChangeEvent } from "react";
+import { ChangeEvent } from "react";
 import { ValidationFn, makeField } from "./types";
 import { object } from "./object";
 import { array } from "./array";
@@ -76,9 +76,10 @@ export const field = {
         return {
           ...input,
           props: {
-            value: input.value,
+            value: input.value || "",
             onChange(event: ChangeEvent<HTMLInputElement>) {
-              input.setValue(event.target.value);
+              let val = event.target.value;
+              input.setValue(val === "" ? undefined : val);
             },
           },
         };

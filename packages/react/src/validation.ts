@@ -1,4 +1,4 @@
-import type { ValidationFn, ValidationResult } from "./types";
+import { ValidationFn, ValidationResult } from "./types";
 
 export function runValidationFunction<
   Value,
