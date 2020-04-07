@@ -19,6 +19,9 @@
     "packages/*",
     "test-app"
   ],
+  "resolutions": {
+    "**/@babel/parser": "7.9.4"
+  },
   "dependencies": {
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.9.0",
@@ -42,8 +45,9 @@
     "jest": "^24.8.0",
     "jest-emotion": "^10.0.17",
     "jest-in-case": "^1.0.2",
+    "prettier": "^2.0.4",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "typescript": "^3.7.2"
+    "typescript": "^3.8.3"
   }
 }
