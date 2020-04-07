@@ -1,4 +1,3 @@
-// TODO: use https://github.com/Thinkmill/magical-forms when the API has solidified more
 import { ChangeEvent, useState } from "react";
 import mapObj from "map-obj";
 
