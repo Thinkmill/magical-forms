@@ -56,6 +56,7 @@ type ObjectFieldMapToField<
       >;
     };
   },
+  // @ts-ignore
   GetValidatedValueFromValidationFn<ValidationFunction>,
   GetValidationErrorFromValidationFn<ValidationFunction>
 >;
@@ -102,9 +103,9 @@ type ObjectValidationFnBase<
   any
 >;
 
-type ValidateOptionBase<
-  ObjectFieldMap extends ObjectFieldBase
-> = ObjectValidationFnBase<ObjectFieldMap>;
+type ValidateOptionBase<ObjectFieldMap extends ObjectFieldBase> =
+  | ObjectValidationFnBase<ObjectFieldMap>
+  | undefined;
 
 type Identity = <T>(t: T) => T;
 
@@ -138,9 +139,12 @@ export function object<
   {
     validate,
   }: {
-    validate: ValidationFunction;
-  }
-): ObjectFieldMapToField<ObjectFieldMap, ValidationFunction> {
+    validate?: ValidationFunction;
+  } = {}
+): ObjectFieldMapToField<
+  ObjectFieldMap,
+  ValidationFunction extends undefined ? Identity : ValidationFunction
+> {
   return {
     getField(input) {
       return {

@@ -24,8 +24,8 @@ let testForm = field.object(
     something: textField,
   },
   {
-    validate(result) {
-      return result;
+    validate(x) {
+      return x;
     },
   }
 );
@@ -36,6 +36,7 @@ export default function Index() {
     <form
       onSubmit={(event) => {
         event.preventDefault();
+        form.value.something;
         if (form.validity === "valid") {
           alert(form.value.something);
         }
