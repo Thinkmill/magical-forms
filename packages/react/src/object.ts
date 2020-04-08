@@ -84,8 +84,8 @@ export function object<
         >;
       }
     ) =>
-      | { validity: "valid"; value: ValidatedValue }
-      | { validity: "invalid"; error: ValidationError };
+      | { validity: "invalid"; error: ValidationError }
+      | { validity: "valid"; value: ValidatedValue };
   }
 ): ObjectFieldMapToField<ObjectFieldMap, ValidatedValue, ValidationError> {
   return {

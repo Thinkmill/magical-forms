@@ -27,7 +27,11 @@ export type FormValidationError<
   ? FormValidationError
   : never;
 
-export type ValidationFn<Value, ValidatedValue, ValidationError> = (
+export type ValidationFn<
+  Value,
+  ValidatedValue extends Value,
+  ValidationError
+> = (
   value: Value
 ) =>
   | { validity: "valid"; value: ValidatedValue }
@@ -42,15 +46,15 @@ export type InitialFieldValueInput<
 > = Parameters<FormField["getInitialValue"]>[0];
 
 export type ValidationResult<Value, ValidatedValue, ValidationError> =
-  | { validity: "valid"; value: ValidatedValue; error: undefined }
-  | { validity: "invalid"; value: Value; error: ValidationError };
+  | { validity: "invalid"; value: Value; error: ValidationError }
+  | { validity: "valid"; value: ValidatedValue; error: undefined };
 
 export type Field<
   Value,
   InitialFieldValueInputType,
   Input extends ValidationResult<Value, ValidatedValue, ValidationError>,
   Meta,
-  ValidatedValue,
+  ValidatedValue extends Value,
   ValidationError
 > = {
   getInitialValue: (initialValueInput: InitialFieldValueInputType) => Value;
@@ -66,7 +70,7 @@ export function makeField<
   InitialFieldValueInputType,
   Input extends ValidationResult<Value, ValidatedValue, ValidationError>,
   Meta,
-  ValidatedValue,
+  ValidatedValue extends Value,
   ValidationError
 >(
   field: Field<

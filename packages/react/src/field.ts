@@ -6,7 +6,7 @@ import { array } from "./array";
 export const field = {
   object,
   array,
-  date: <ValidatedValue, ValidationError>({
+  date: <ValidatedValue extends Date | undefined, ValidationError>({
     validate,
   }: {
     validate: ValidationFn<Date | undefined, ValidatedValue, ValidationError>;
@@ -23,7 +23,7 @@ export const field = {
       getInitialMeta: () => ({ touched: false }),
       validate,
     }),
-  string: <ValidatedValue, ValidationError>({
+  string: <ValidatedValue extends string | undefined, ValidationError>({
     validate,
   }: {
     validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
@@ -40,11 +40,14 @@ export const field = {
       getInitialMeta: () => ({}),
       validate,
     }),
-  dateRange: <ValidatedValue, ValidationError>({
+  dateRange: <
+    ValidatedValue extends { from?: Date; to?: Date },
+    ValidationError
+  >({
     validate,
   }: {
     validate: ValidationFn<
-      { from?: Date; to?: Date } | undefined,
+      { from?: Date; to?: Date },
       ValidatedValue,
       ValidationError
     >;
@@ -66,7 +69,7 @@ export const field = {
       },
       validate,
     }),
-  text: <ValidatedValue, ValidationError>({
+  text: <ValidatedValue extends string | undefined, ValidationError>({
     validate,
   }: {
     validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
@@ -88,11 +91,10 @@ export const field = {
         initialValueInput,
       getInitialMeta: () => ({
         touched: false,
-        validity: "invalid",
       }),
       validate,
     }),
-  number: <ValidatedValue, ValidationError>({
+  number: <ValidatedValue extends number | undefined, ValidationError>({
     validate,
   }: {
     validate: ValidationFn<number | undefined, ValidatedValue, ValidationError>;
@@ -115,7 +117,7 @@ export const field = {
       getInitialMeta: () => ({}),
       validate,
     }),
-  select: <ValidatedValue, ValidationError>({
+  select: <ValidatedValue extends string | undefined, ValidationError>({
     validate,
   }: {
     validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
@@ -137,7 +139,7 @@ export const field = {
       getInitialMeta: () => ({}),
       validate,
     }),
-  checkbox: <ValidatedValue, ValidationError>({
+  checkbox: <ValidatedValue extends boolean, ValidationError>({
     validate,
   }: {
     validate: ValidationFn<boolean, ValidatedValue, ValidationError>;
