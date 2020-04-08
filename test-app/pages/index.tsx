@@ -12,7 +12,7 @@ import { RawTypes } from "@magical-types/macro/write-data-to-fs.macro";
 
 let textField = field.text({
   validate: (value) => {
-    // if (value === undefined) return validation.invalid("required");
+    if (value === undefined) return validation.invalid("required");
     if (value === "thing") return validation.invalid("cannot be thing");
 
     return validation.valid(value);
@@ -24,20 +24,11 @@ let testForm = field.object(
     something: textField,
   },
   {
-    validate(children) {
-      if (Object.values(children).some((x) => x.validity === "invalid")) {
-        return validation.invalid(
-          <div style={{ color: "red" }}>children have errors</div>
-        );
-      }
-      return validation.valid({ something: children.something.value! });
-    },
+    // validate(result) {
+    //   return result;
+    // },
   }
 );
-
-function Test() {
-  let form = useForm(textField);
-}
 
 export default function Index() {
   let form = useForm(testForm);
@@ -46,7 +37,7 @@ export default function Index() {
       onSubmit={(event) => {
         event.preventDefault();
         if (form.validity === "valid") {
-          alert(form.value);
+          alert(form.value.something);
         }
       }}
     >

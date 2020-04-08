@@ -1,35 +1,30 @@
 import { ChangeEvent } from "react";
-import { ValidationFn, makeField } from "./types";
+import { ValidationFn, makeField, BasicFieldInput } from "./types";
 import { object } from "./object";
 import { array } from "./array";
 
 export const field = {
   object,
   array,
-  date: <ValidatedValue extends Date | undefined, ValidationError>({
-    validate,
-  }: {
-    validate: ValidationFn<Date | undefined, ValidatedValue, ValidationError>;
-  }) =>
-    makeField({
-      getField(input) {
-        return {
-          ...input,
-          props: { value: input.value, onChange: input.setValue },
-        };
-      },
-      getInitialValue: (initialValueInput: Date | undefined) =>
-        initialValueInput,
-      getInitialMeta: () => ({ touched: false }),
-      validate,
-    }),
   string: <ValidatedValue extends string | undefined, ValidationError>({
     validate,
   }: {
     validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
   }) =>
     makeField({
-      getField(input) {
+      getField(
+        input
+      ): BasicFieldInput<
+        string | undefined,
+        {},
+        ValidatedValue,
+        ValidationError
+      > & {
+        props: {
+          value: string | undefined;
+          onChange(value: string | undefined): void;
+        };
+      } {
         return {
           ...input,
           props: { value: input.value, onChange: input.setValue },
@@ -40,49 +35,38 @@ export const field = {
       getInitialMeta: () => ({}),
       validate,
     }),
-  dateRange: <
-    ValidatedValue extends { from?: Date; to?: Date },
-    ValidationError
-  >({
-    validate,
-  }: {
-    validate: ValidationFn<
-      { from?: Date; to?: Date },
-      ValidatedValue,
-      ValidationError
-    >;
-  }) =>
-    makeField({
-      getField(input) {
-        return {
-          ...input,
-          props: { value: input.value, onChange: input.setValue },
-        };
-      },
-      getInitialValue: (
-        initialValueInput: { from?: Date; to?: Date } | undefined
-      ) => initialValueInput || { from: undefined, to: undefined },
-      getInitialMeta: () => {
-        return {
-          touched: false,
-        };
-      },
-      validate,
-    }),
   text: <ValidatedValue extends string | undefined, ValidationError>({
     validate,
   }: {
     validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
   }) =>
     makeField({
-      getField(input) {
+      getField(
+        input
+      ): BasicFieldInput<
+        string | undefined,
+        { touched: boolean },
+        ValidatedValue,
+        ValidationError
+      > & {
+        props: {
+          value: string;
+          onChange(event: ChangeEvent<HTMLInputElement>): void;
+          onBlur(): void;
+        };
+      } {
         return {
           ...input,
           props: {
-            value: input.value || "",
+            value: (input.value as string) || "",
             onChange(event: ChangeEvent<HTMLInputElement>) {
               let val = event.target.value;
               input.setValue(val === "" ? undefined : val);
+            },
+            onBlur() {
+              if (input.meta.touched === false) {
+                input.setMeta({ touched: true });
+              }
             },
           },
         };
@@ -123,7 +107,20 @@ export const field = {
     validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
   }) =>
     makeField({
-      getField(input) {
+      getField(
+        input
+      ): BasicFieldInput<
+        string | undefined,
+        { touched: boolean },
+        ValidatedValue,
+        ValidationError
+      > & {
+        props: {
+          value: string | undefined;
+          onChange(event: ChangeEvent<HTMLSelectElement>): void;
+          onBlur(): void;
+        };
+      } {
         return {
           ...input,
           props: {
@@ -131,12 +128,17 @@ export const field = {
             onChange(event: ChangeEvent<HTMLSelectElement>) {
               input.setValue(event.target.value);
             },
+            onBlur() {
+              if (input.meta.touched === false) {
+                input.setMeta({ touched: true });
+              }
+            },
           },
         };
       },
       getInitialValue: (initialValueInput: string | undefined) =>
         initialValueInput,
-      getInitialMeta: () => ({}),
+      getInitialMeta: () => ({ touched: false }),
       validate,
     }),
   checkbox: <ValidatedValue extends boolean, ValidationError>({
@@ -145,7 +147,20 @@ export const field = {
     validate: ValidationFn<boolean, ValidatedValue, ValidationError>;
   }) =>
     makeField({
-      getField(input) {
+      getField(
+        input
+      ): BasicFieldInput<
+        boolean,
+        { touched: boolean },
+        ValidatedValue,
+        ValidationError
+      > & {
+        props: {
+          checked: boolean;
+          onChange(event: ChangeEvent<HTMLInputElement>): void;
+          onBlur(): void;
+        };
+      } {
         return {
           ...input,
           props: {
@@ -153,12 +168,17 @@ export const field = {
             onChange(event: ChangeEvent<HTMLInputElement>) {
               input.setValue(event.target.checked);
             },
+            onBlur() {
+              if (input.meta.touched === false) {
+                input.setMeta({ touched: true });
+              }
+            },
           },
         };
       },
       getInitialValue: (initialValueInput: boolean | undefined = false) =>
         initialValueInput,
-      getInitialMeta: () => ({}),
+      getInitialMeta: () => ({ touched: false }),
       validate,
     }),
 };

@@ -17,7 +17,10 @@ export type Form<
 
 export type ValidatedFormValue<
   FormField extends Field<any, any, any, any, any, any>
-> = FormField extends Field<any, any, any, any, infer ValidatedValue, any>
+> = ReturnType<FormField["validate"]> extends {
+  validity: "valid";
+  value: infer ValidatedValue;
+}
   ? ValidatedValue
   : never;
 
@@ -45,9 +48,21 @@ export type InitialFieldValueInput<
   FormField extends Field<any, any, any, any, any, any>
 > = Parameters<FormField["getInitialValue"]>[0];
 
+export type InvalidValidationResult<Value, ValidationError> = {
+  validity: "invalid";
+  value: Value;
+  error: ValidationError;
+};
+
+export type ValidValidationResult<ValidatedValue> = {
+  validity: "valid";
+  value: ValidatedValue;
+  error: undefined;
+};
+
 export type ValidationResult<Value, ValidatedValue, ValidationError> =
-  | { validity: "invalid"; value: Value; error: ValidationError }
-  | { validity: "valid"; value: ValidatedValue; error: undefined };
+  | InvalidValidationResult<Value, ValidationError>
+  | ValidValidationResult<ValidatedValue>;
 
 export type Field<
   Value,

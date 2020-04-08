@@ -1,9 +1,9 @@
-import { ValidationFn, ValidationResult } from "./types";
+import { ValidationFn, ValidationResult, ValidValidationResult } from "./types";
 
 export function runValidationFunction<
   Value,
   ValidationError,
-  ValidatedValue = Value
+  ValidatedValue extends Value
 >(
   validationFn: ValidationFn<Value, ValidatedValue, ValidationError>,
   value: Value

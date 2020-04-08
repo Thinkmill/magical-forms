@@ -7,18 +7,26 @@ import {
   ValidationResult,
   ValidatedFormValue,
   FormValidationError,
+  ValidationFn,
 } from "./types";
-import { runValidationFunction } from "./validation";
+import { runValidationFunction, validation } from "./validation";
+
+export type ObjectValidationFn<PrevResult, ValidatedValue, ValidationError> = (
+  value: PrevResult
+) =>
+  | { validity: "valid"; value: ValidatedValue }
+  | { validity: "invalid"; error: ValidationError };
 
 type ObjectFieldBase = { [key: string]: Field<any, any, any, any, any, any> };
 
 type ObjectFieldMapToField<
   ObjectFieldMap extends ObjectFieldBase,
-  ValidatedValue,
-  ValidationError
+  ValidationFunction extends ObjectValidationFnBase<ObjectFieldMap>
 > = Field<
   {
-    readonly [Key in keyof ObjectFieldMap]: FormValue<ObjectFieldMap[Key]>;
+    readonly [Key in keyof ObjectFieldMap]: ReturnType<
+      ObjectFieldMap[Key]["getInitialValue"]
+    >;
   },
   | {
       [Key in keyof ObjectFieldMap]?: InitialFieldValueInput<
@@ -28,16 +36,8 @@ type ObjectFieldMapToField<
   | undefined,
   {
     readonly props: {
-      value: {
-        readonly [Key in keyof ObjectFieldMap]: FormValue<ObjectFieldMap[Key]>;
-      };
-      onChange(
-        value: {
-          readonly [Key in keyof ObjectFieldMap]: FormValue<
-            ObjectFieldMap[Key]
-          >;
-        }
-      ): void;
+      value: ObjectValueFromFieldMap<ObjectFieldMap>;
+      onChange(value: ObjectValueFromFieldMap<ObjectFieldMap>): void;
     };
     readonly fields: {
       readonly [Key in keyof ObjectFieldMap]: ReturnType<
@@ -45,11 +45,9 @@ type ObjectFieldMapToField<
       >;
     };
   } & ValidationResult<
-    {
-      readonly [Key in keyof ObjectFieldMap]: FormValue<ObjectFieldMap[Key]>;
-    },
-    ValidatedValue,
-    ValidationError
+    ObjectValueFromFieldMap<ObjectFieldMap>,
+    GetValidatedValueFromValidationFn<ValidationFunction>,
+    GetValidationErrorFromValidationFn<ValidationFunction>
   >,
   {
     fields: {
@@ -58,49 +56,125 @@ type ObjectFieldMapToField<
       >;
     };
   },
-  ValidatedValue,
-  ValidationError
+  GetValidatedValueFromValidationFn<ValidationFunction>,
+  GetValidationErrorFromValidationFn<ValidationFunction>
 >;
 
-export function object<
-  ObjectFieldMap extends ObjectFieldBase,
-  ValidatedValue extends {
+type GetValidationErrorFromValidationFn<
+  ValidationOption
+> = ValidationOption extends ObjectValidationFn<any, any, infer ValidationError>
+  ? ValidationError
+  : never;
+
+type GetValidatedValueFromValidationFn<
+  ValidationOption
+> = ValidationOption extends ObjectValidationFn<any, infer ValidatedValue, any>
+  ? ValidatedValue
+  : never;
+
+type ObjectValueFromFieldMap<ObjectFieldMap extends ObjectFieldBase> = {
+  readonly [Key in keyof ObjectFieldMap]: ReturnType<
+    ObjectFieldMap[Key]["getInitialValue"]
+  >;
+};
+
+type ObjectValidationFnBase<
+  ObjectFieldMap extends ObjectFieldBase
+> = ObjectValidationFn<
+  ValidationResult<
+    ObjectValueFromFieldMap<ObjectFieldMap>,
+    {
+      readonly [Key in keyof ObjectFieldMap]: ReturnType<
+        ObjectFieldMap[Key]["getInitialValue"]
+      >; //ReturnType<
+      //   ObjectFieldMap[Key]["validate"]
+      // > extends {
+      //   validity: "valid";
+      //   value: infer ValidatedValue;
+      // }
+      //   ? ValidatedValue
+      //   : never;
+      //   ValidatedFormValue<
+      //   ObjectFieldMap[Key]
+      // >;
+    },
+    {
+      readonly [Key in keyof ObjectFieldMap]: FormValidationError<
+        ObjectFieldMap[Key]
+      >;
+    }
+  >,
+  {
     readonly [Key in keyof ObjectFieldMap]: ReturnType<
       ObjectFieldMap[Key]["getInitialValue"]
     >;
   },
-  ValidationError
+  any
+>;
+
+type ValidateOptionBase<ObjectFieldMap extends ObjectFieldBase> =
+  | ObjectValidationFnBase<ObjectFieldMap>
+  | undefined;
+
+type Identity = <T>(t: T) => T;
+
+// ? ObjectValidationFn<
+//     ValidationResult<
+//       ObjectValueFromFieldMap<ObjectFieldMap>,
+//       {
+//         readonly [Key in keyof ObjectFieldMap]: ValidatedFormValue<
+//           ObjectFieldMap[Key]
+//         >;
+//       },
+//       {
+//         readonly [Key in keyof ObjectFieldMap]: FormValidationError<
+//           ObjectFieldMap[Key]
+//         >;
+//       }
+//     >,
+//     {
+//       readonly [Key in keyof ObjectFieldMap]: ReturnType<
+//         ObjectFieldMap[Key]["getInitialValue"]
+//       >;
+//     },
+//     any
+//   >
+
+export function object<
+  ObjectFieldMap extends ObjectFieldBase,
+  ValidationFunction extends ValidateOptionBase<ObjectFieldMap>
 >(
   fields: ObjectFieldMap,
   {
     validate,
   }: {
-    validate: (
-      result: {
-        readonly [Key in keyof ObjectFieldMap]: ValidationResult<
-          FormValue<ObjectFieldMap[Key]>,
-          ValidatedFormValue<ObjectFieldMap[Key]>,
-          FormValidationError<ObjectFieldMap[Key]>
-        >;
-      }
-    ) =>
-      | { validity: "invalid"; error: ValidationError }
-      | { validity: "valid"; value: ValidatedValue };
-  }
-): ObjectFieldMapToField<ObjectFieldMap, ValidatedValue, ValidationError> {
+    validate?: ValidationFunction;
+  } = {}
+): ObjectFieldMapToField<
+  ObjectFieldMap,
+  ValidationFunction extends undefined ? Identity : ValidationFunction
+> {
   return {
     getField(input) {
       return {
         ...input,
-        props: { value: input.value, onChange: input.setValue },
+        props: {
+          value: input.value as ObjectValueFromFieldMap<ObjectFieldMap>,
+          onChange: input.setValue,
+        },
         fields: mapObject(fields, (sourceKey, sourceValue) =>
           sourceValue.getField({
             ...runValidationFunction(
               sourceValue.validate,
+              // @ts-ignore
               input.value[sourceKey]
             ),
             setValue: (val: any) => {
-              input.setValue({ ...input.value, [sourceKey]: val });
+              input.setValue({
+                // @ts-ignore
+                ...input.value,
+                [sourceKey]: val,
+              });
             },
             meta: input.meta.fields[sourceKey],
             setMeta: (val: any) => {
@@ -122,10 +196,28 @@ export function object<
       ),
     }),
     validate: (value) => {
+      let innerResult = mapObject(fields, (sourceKey, sourceValue) =>
+        runValidationFunction(sourceValue.validate, value[sourceKey])
+      );
+      let areAllFieldsValid = Object.values(innerResult).every(
+        (value) => value.validity === "valid"
+      );
+      let errors = mapObject(
+        innerResult,
+        (_sourceKey, sourceValue) => sourceValue.error
+      );
+      if (validate === undefined) {
+        return areAllFieldsValid
+          ? validation.valid(value)
+          : validation.invalid(errors);
+      }
       return validate(
-        mapObject(fields, (sourceKey, sourceValue) =>
-          runValidationFunction(sourceValue.validate, value[sourceKey])
-        )
+        // @ts-ignore
+        {
+          validity: areAllFieldsValid ? "valid" : "invalid",
+          value,
+          error: areAllFieldsValid ? undefined : errors,
+        }
       );
     },
   };
