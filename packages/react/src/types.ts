@@ -17,10 +17,7 @@ export type Form<
 
 export type ValidatedFormValue<
   FormField extends Field<any, any, any, any, any, any>
-> = ReturnType<FormField["validate"]> extends {
-  validity: "valid";
-  value: infer ValidatedValue;
-}
+> = FormField extends Field<any, any, any, any, infer ValidatedValue, any>
   ? ValidatedValue
   : never;
 

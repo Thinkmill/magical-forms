@@ -84,19 +84,9 @@ type ObjectValidationFnBase<
   ValidationResult<
     ObjectValueFromFieldMap<ObjectFieldMap>,
     {
-      readonly [Key in keyof ObjectFieldMap]: ReturnType<
-        ObjectFieldMap[Key]["getInitialValue"]
-      >; //ReturnType<
-      //   ObjectFieldMap[Key]["validate"]
-      // > extends {
-      //   validity: "valid";
-      //   value: infer ValidatedValue;
-      // }
-      //   ? ValidatedValue
-      //   : never;
-      //   ValidatedFormValue<
-      //   ObjectFieldMap[Key]
-      // >;
+      readonly [Key in keyof ObjectFieldMap]: ValidatedFormValue<
+        ObjectFieldMap[Key]
+      >;
     },
     {
       readonly [Key in keyof ObjectFieldMap]: FormValidationError<
@@ -105,16 +95,16 @@ type ObjectValidationFnBase<
     }
   >,
   {
-    readonly [Key in keyof ObjectFieldMap]: ReturnType<
-      ObjectFieldMap[Key]["getInitialValue"]
+    readonly [Key in keyof ObjectFieldMap]: ValidatedFormValue<
+      ObjectFieldMap[Key]
     >;
   },
   any
 >;
 
-type ValidateOptionBase<ObjectFieldMap extends ObjectFieldBase> =
-  | ObjectValidationFnBase<ObjectFieldMap>
-  | undefined;
+type ValidateOptionBase<
+  ObjectFieldMap extends ObjectFieldBase
+> = ObjectValidationFnBase<ObjectFieldMap>;
 
 type Identity = <T>(t: T) => T;
 
@@ -148,12 +138,9 @@ export function object<
   {
     validate,
   }: {
-    validate?: ValidationFunction;
-  } = {}
-): ObjectFieldMapToField<
-  ObjectFieldMap,
-  ValidationFunction extends undefined ? Identity : ValidationFunction
-> {
+    validate: ValidationFunction;
+  }
+): ObjectFieldMapToField<ObjectFieldMap, ValidationFunction> {
   return {
     getField(input) {
       return {

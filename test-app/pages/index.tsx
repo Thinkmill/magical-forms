@@ -24,9 +24,9 @@ let testForm = field.object(
     something: textField,
   },
   {
-    // validate(result) {
-    //   return result;
-    // },
+    validate(result) {
+      return result;
+    },
   }
 );
 
