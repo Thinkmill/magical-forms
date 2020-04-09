@@ -52,20 +52,49 @@ type ArrayField<
   ValidationError
 >;
 
+type GetValidationErrorFromValidationFn<
+  InnerValue,
+  InnerValidatedValue extends InnerValue,
+  InnerValidationError,
+  ValidationOption
+> = ValidationOption extends ArrayValidationFn<
+  InnerValue,
+  InnerValidatedValue,
+  InnerValidationError,
+  any,
+  infer ValidationError
+>
+  ? ValidationError
+  : never;
+
+type GetValidatedValueFromValidationFn<
+  InnerValue,
+  InnerValidatedValue extends InnerValue,
+  InnerValidationError,
+  ValidationOption
+> = ValidationOption extends ArrayValidationFn<
+  InnerValue,
+  InnerValidatedValue,
+  InnerValidationError,
+  infer ValidatedValue,
+  any
+>
+  ? ValidatedValue
+  : never;
+
+type GetStuffFromForm<
+  FormField extends Field<any, any, any, any, any, any>
+> = FormField extends Field<infer Value, any, any, any, any, any>
+  ? FormField extends Field<Value, any, any, any, infer ValidatedValue, any>
+    ? { value: Value; validated: ValidatedValue }
+    : never
+  : never;
+
 export const array = <
   InternalField extends Field<any, any, any, any, any, any>,
   ValidationFunction extends ArrayValidationFn<
-    FormValue<InternalField>,
-    InternalField extends Field<
-      FormValue<InternalField>,
-      any,
-      any,
-      any,
-      infer ValidatedValue,
-      any
-    >
-      ? ValidatedValue
-      : never,
+    GetStuffFromForm<InternalField>["value"],
+    GetStuffFromForm<InternalField>["validated"],
     FormValidationError<InternalField>,
     FormValue<InternalField>[],
     any
@@ -78,25 +107,19 @@ export const array = <
     validate: ValidationFunction;
   }
 ): ArrayField<
-  InternalField
-  // ValidationFunction extends ArrayValidationFn<
-  //   FormValue<InternalField>,
-  //   ValidatedFormValue<InternalField>
-  //   FormValidationError<InternalField>,
-  //   infer ValidatedValue,
-  //   any
-  // >
-  //   ? ValidatedValue
-  //   : never,
-  // ValidationFunction extends ArrayValidationFn<
-  // FormValue<InternalField>,
-  // ValidatedFormValue<InternalField>
-  // FormValidationError<InternalField>,
-  // any,
-  //   infer ValidationError
-  // >
-  //   ? ValidationError
-  //   : never
+  InternalField,
+  GetValidatedValueFromValidationFn<
+    GetStuffFromForm<InternalField>["value"],
+    GetStuffFromForm<InternalField>["validated"],
+    FormValidationError<InternalField>,
+    ValidationFunction
+  >,
+  GetValidatedValueFromValidationFn<
+    GetStuffFromForm<InternalField>["value"],
+    GetStuffFromForm<InternalField>["validated"],
+    FormValidationError<InternalField>,
+    ValidationFunction
+  >
 > => {
   return {
     getField(input) {
