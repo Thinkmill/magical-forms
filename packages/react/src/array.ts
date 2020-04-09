@@ -5,12 +5,28 @@ import {
   Form,
   ValidationResult,
   ValidationFn,
+  ValidatedFormValue,
+  FormValidationError,
 } from "./types";
-import { runValidationFunction } from "./validation";
+import { runValidationFunction, validation } from "./validation";
+
+type ArrayValidationFn<
+  InnerValue,
+  InnerValidatedValue extends InnerValue,
+  InnerValidationError,
+  ValidatedValue extends InnerValue[],
+  ValidationError
+> = (
+  value:
+    | { validity: "valid"; value: InnerValidatedValue[] }
+    | { validity: "invalid"; error: InnerValidationError[] }
+) =>
+  | { validity: "valid"; value: ValidatedValue }
+  | { validity: "invalid"; error: ValidationError };
 
 type ArrayField<
   InternalField extends Field<any, any, any, any, any, any>,
-  ValidatedValue,
+  ValidatedValue extends FormValue<InternalField>[],
   ValidationError
 > = Field<
   FormValue<InternalField>[],
@@ -38,20 +54,50 @@ type ArrayField<
 
 export const array = <
   InternalField extends Field<any, any, any, any, any, any>,
-  ValidatedValue extends FormValue<InternalField>[],
-  ValidationError
+  ValidationFunction extends ArrayValidationFn<
+    FormValue<InternalField>,
+    InternalField extends Field<
+      FormValue<InternalField>,
+      any,
+      any,
+      any,
+      infer ValidatedValue,
+      any
+    >
+      ? ValidatedValue
+      : never,
+    FormValidationError<InternalField>,
+    FormValue<InternalField>[],
+    any
+  >
 >(
   internalField: InternalField,
   {
     validate,
   }: {
-    validate: ValidationFn<
-      FormValue<InternalField>[],
-      ValidatedValue,
-      ValidationError
-    >;
+    validate: ValidationFunction;
   }
-): ArrayField<InternalField, ValidatedValue, ValidationError> => {
+): ArrayField<
+  InternalField
+  // ValidationFunction extends ArrayValidationFn<
+  //   FormValue<InternalField>,
+  //   ValidatedFormValue<InternalField>
+  //   FormValidationError<InternalField>,
+  //   infer ValidatedValue,
+  //   any
+  // >
+  //   ? ValidatedValue
+  //   : never,
+  // ValidationFunction extends ArrayValidationFn<
+  // FormValue<InternalField>,
+  // ValidatedFormValue<InternalField>
+  // FormValidationError<InternalField>,
+  // any,
+  //   infer ValidationError
+  // >
+  //   ? ValidationError
+  //   : never
+> => {
   return {
     getField(input) {
       return {
@@ -87,6 +133,25 @@ export const array = <
     getInitialMeta: (value) => ({
       items: value.map((x) => internalField.getInitialMeta(x)),
     }),
-    validate,
+    validate: (value) => {
+      let innerResult = value.map((val) =>
+        runValidationFunction(internalField.validate, val)
+      );
+      let areAllFieldsValid = innerResult.every(
+        (value) => value.validity === "valid"
+      );
+      let errors = innerResult.map((val) => val.error);
+      if (validate === undefined) {
+        return areAllFieldsValid
+          ? validation.valid(value)
+          : validation.invalid(errors);
+      }
+      return validate({
+        validity: areAllFieldsValid ? "valid" : "invalid",
+        value,
+        // @ts-ignore
+        error: areAllFieldsValid ? undefined : errors,
+      });
+    },
   };
 };
