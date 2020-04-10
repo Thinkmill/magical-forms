@@ -1,5 +1,5 @@
 type Mapper<
-  SourceObjectType extends { [key: string]: any },
+  SourceObjectType extends { readonly [key: string]: any },
   MappedObjectValueType
 > = (
   sourceKey: keyof SourceObjectType,
@@ -7,7 +7,7 @@ type Mapper<
 ) => MappedObjectValueType;
 
 export function mapObject<
-  SourceObjectType extends { [key: string]: any },
+  SourceObjectType extends { readonly [key: string]: any },
   MappedObjectValueType
 >(
   source: SourceObjectType,
