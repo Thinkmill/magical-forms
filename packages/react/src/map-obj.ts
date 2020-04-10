@@ -12,7 +12,7 @@ export function mapObject<
 >(
   source: SourceObjectType,
   mapper: Mapper<SourceObjectType, MappedObjectValueType>
-): { [K in keyof SourceObjectType]: MappedObjectValueType } {
+): { readonly [K in keyof SourceObjectType]: MappedObjectValueType } {
   let target: any = {};
   for (const [key, value] of Object.entries(source)) {
     let newValue = mapper(key, value);
