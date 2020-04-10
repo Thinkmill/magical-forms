@@ -14,20 +14,20 @@ export function runValidationFunction<
       validity: "valid",
       value: result.value,
       error: undefined,
-    };
+    } as const;
   }
   return {
-    validity: "invalid" as const,
+    validity: "invalid",
     value,
     error: result.error,
-  };
+  } as const;
 }
 
 export const validation = {
   valid<ValidValue>(value: ValidValue) {
-    return { validity: "valid" as const, value };
+    return { validity: "valid" as const, value } as const;
   },
   invalid<Error>(error: Error) {
-    return { validity: "invalid" as const, error };
+    return { validity: "invalid" as const, error } as const;
   },
 };

@@ -22,6 +22,12 @@ let textField = field.text({
 let testForm = field.object(
   {
     something: textField,
+    other: field.select({
+      validate(value) {
+        if (value === undefined) return validation.invalid("required");
+        return validation.valid(value);
+      },
+    }),
   },
   {
     validate(x) {
@@ -38,7 +44,7 @@ export default function Index() {
         event.preventDefault();
         form.value.something;
         if (form.validity === "valid") {
-          alert(form.value.something);
+          alert(form.value.other);
         }
       }}
     >

@@ -34,8 +34,8 @@ export type ValidationFn<
 > = (
   value: Value
 ) =>
-  | { validity: "valid"; value: ValidatedValue }
-  | { validity: "invalid"; error: ValidationError };
+  | { readonly validity: "valid"; readonly value: ValidatedValue }
+  | { readonly validity: "invalid"; readonly error: ValidationError };
 
 export type FormValue<
   FormField extends Field<any, any, any, any, any, any>
@@ -46,15 +46,15 @@ export type InitialFieldValueInput<
 > = Parameters<FormField["getInitialValue"]>[0];
 
 export type InvalidValidationResult<Value, ValidationError> = {
-  validity: "invalid";
-  value: Value;
-  error: ValidationError;
+  readonly validity: "invalid";
+  readonly value: Value;
+  readonly error: ValidationError;
 };
 
 export type ValidValidationResult<ValidatedValue> = {
-  validity: "valid";
-  value: ValidatedValue;
-  error: undefined;
+  readonly validity: "valid";
+  readonly value: ValidatedValue;
+  readonly error: undefined;
 };
 
 export type ValidationResult<Value, ValidatedValue, ValidationError> =
@@ -69,12 +69,14 @@ export type Field<
   ValidatedValue extends Value,
   ValidationError
 > = {
-  getInitialValue: (initialValueInput: InitialFieldValueInputType) => Value;
-  getInitialMeta: (value: Value) => Meta;
-  getField: (
+  readonly getInitialValue: (
+    initialValueInput: InitialFieldValueInputType
+  ) => Value;
+  readonly getInitialMeta: (value: Value) => Meta;
+  readonly getField: (
     input: BasicFieldInput<Value, Meta, ValidatedValue, ValidationError>
   ) => Input;
-  validate: ValidationFn<Value, ValidatedValue, ValidationError>;
+  readonly validate: ValidationFn<Value, ValidatedValue, ValidationError>;
 };
 
 export function makeField<

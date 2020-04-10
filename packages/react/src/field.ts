@@ -1,5 +1,5 @@
 import { ChangeEvent } from "react";
-import { ValidationFn, makeField, BasicFieldInput } from "./types";
+import { ValidationFn, makeField } from "./types";
 import { object } from "./object";
 import { array } from "./array";
 
@@ -12,19 +12,7 @@ export const field = {
     validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
   }) =>
     makeField({
-      getField(
-        input
-      ): BasicFieldInput<
-        string | undefined,
-        {},
-        ValidatedValue,
-        ValidationError
-      > & {
-        props: {
-          value: string | undefined;
-          onChange(value: string | undefined): void;
-        };
-      } {
+      getField(input) {
         return {
           ...input,
           props: { value: input.value, onChange: input.setValue },
@@ -41,20 +29,7 @@ export const field = {
     validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
   }) =>
     makeField({
-      getField(
-        input
-      ): BasicFieldInput<
-        string | undefined,
-        { touched: boolean },
-        ValidatedValue,
-        ValidationError
-      > & {
-        props: {
-          value: string;
-          onChange(event: ChangeEvent<HTMLInputElement>): void;
-          onBlur(): void;
-        };
-      } {
+      getField(input) {
         return {
           ...input,
           props: {
@@ -107,20 +82,7 @@ export const field = {
     validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
   }) =>
     makeField({
-      getField(
-        input
-      ): BasicFieldInput<
-        string | undefined,
-        { touched: boolean },
-        ValidatedValue,
-        ValidationError
-      > & {
-        props: {
-          value: string | undefined;
-          onChange(event: ChangeEvent<HTMLSelectElement>): void;
-          onBlur(): void;
-        };
-      } {
+      getField(input) {
         return {
           ...input,
           props: {
@@ -147,20 +109,7 @@ export const field = {
     validate: ValidationFn<boolean, ValidatedValue, ValidationError>;
   }) =>
     makeField({
-      getField(
-        input
-      ): BasicFieldInput<
-        boolean,
-        { touched: boolean },
-        ValidatedValue,
-        ValidationError
-      > & {
-        props: {
-          checked: boolean;
-          onChange(event: ChangeEvent<HTMLInputElement>): void;
-          onBlur(): void;
-        };
-      } {
+      getField(input) {
         return {
           ...input,
           props: {
