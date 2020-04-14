@@ -130,7 +130,11 @@ export type OptionsToDefaultOptions<Value, Obj extends BasicOptions<Value>> = [
 
 export type ValidationFunctionToValidatedValue<
   Value,
-  ValidationFunction extends ValidationFn<Value, Value, unknown>
+  ValidationFunction extends (
+    ...args: any
+  ) =>
+    | { readonly validity: "valid"; readonly value: Value }
+    | { readonly validity: "invalid"; readonly error: unknown }
 > = Extract<ReturnType<ValidationFunction>, { validity: "valid" }>["value"];
 
 export type ValidationFunctionToValidationError<

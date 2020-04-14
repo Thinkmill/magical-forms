@@ -10,8 +10,12 @@ import {
 import { runValidationFunction, validation } from "./validation";
 
 export type ValidationFunctionToValidatedValue<
-  ObjectFieldMap extends ObjectFieldBase,
-  ValidationFunction extends ObjectValidationFn<ObjectFieldMap>
+  Value,
+  ValidationFunction extends (
+    ...args: any
+  ) =>
+    | { readonly validity: "valid"; readonly value: Value }
+    | { readonly validity: "invalid"; readonly error: unknown }
 > = Extract<ReturnType<ValidationFunction>, { validity: "valid" }>["value"];
 
 export type ValidationFunctionToValidationError<
@@ -72,8 +76,9 @@ type ObjectValue<ObjectFieldMap extends ObjectFieldBase> = {
 };
 
 type ObjectValidatedInternalValue<ObjectFieldMap extends ObjectFieldBase> = {
-  readonly [Key in keyof ObjectFieldMap]: ValidatedFormValue<
-    ObjectFieldMap[Key]
+  readonly [Key in keyof ObjectFieldMap]: ValidationFunctionToValidatedValue<
+    ObjectValue<ObjectFieldMap>,
+    ObjectFieldMap[Key]["validate"]
   >;
 };
 
@@ -101,7 +106,7 @@ type ObjectFieldMapToField<
   } & ValidationResult<
     ObjectValueFromFieldMap<ObjectFieldMap>,
     ValidationFunctionToValidatedValue<
-      ObjectFieldMap,
+      ObjectValue<ObjectFieldMap>,
       ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
     >,
     ValidationFunctionToValidationError<
@@ -117,7 +122,7 @@ type ObjectFieldMapToField<
     };
   },
   ValidationFunctionToValidatedValue<
-    ObjectFieldMap,
+    ObjectValue<ObjectFieldMap>,
     ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
   >,
   ValidationFunctionToValidationError<
