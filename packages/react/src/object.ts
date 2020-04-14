@@ -84,7 +84,8 @@ type ObjectValidatedInternalValue<ObjectFieldMap extends ObjectFieldBase> = {
 
 type ObjectFieldMapToField<
   ObjectFieldMap extends ObjectFieldBase,
-  Options extends OptionsBase<ObjectFieldMap> | undefined
+  ValidatedValue extends ObjectValue<ObjectFieldMap>,
+  ValidationError
 > = Field<
   ObjectValue<ObjectFieldMap>,
   | {
@@ -105,14 +106,8 @@ type ObjectFieldMapToField<
     };
   } & ValidationResult<
     ObjectValueFromFieldMap<ObjectFieldMap>,
-    ValidationFunctionToValidatedValue<
-      ObjectValue<ObjectFieldMap>,
-      ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
-    >,
-    ValidationFunctionToValidationError<
-      ObjectFieldMap,
-      ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
-    >
+    ValidatedValue,
+    ValidationError
   >,
   {
     fields: {
@@ -121,14 +116,8 @@ type ObjectFieldMapToField<
       >;
     };
   },
-  ValidationFunctionToValidatedValue<
-    ObjectValue<ObjectFieldMap>,
-    ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
-  >,
-  ValidationFunctionToValidationError<
-    ObjectFieldMap,
-    ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
-  >
+  ValidatedValue,
+  ValidationError
 >;
 
 type ObjectValueFromFieldMap<ObjectFieldMap extends ObjectFieldBase> = {
@@ -186,7 +175,17 @@ export function object<
 >(
   fields: ObjectFieldMap,
   options?: Options
-): ObjectFieldMapToField<ObjectFieldMap, Options> {
+): ObjectFieldMapToField<
+  ObjectFieldMap,
+  ValidationFunctionToValidatedValue<
+    ObjectValue<ObjectFieldMap>,
+    ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
+  >,
+  ValidationFunctionToValidationError<
+    ObjectFieldMap,
+    ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
+  >
+> {
   return {
     getField(input) {
       return {
