@@ -90,8 +90,8 @@ type ObjectFieldMapToField<
   | undefined,
   {
     readonly props: {
-      value: ObjectValueFromFieldMap<ObjectFieldMap>;
-      onChange(value: ObjectValueFromFieldMap<ObjectFieldMap>): void;
+      value: ObjectValue<ObjectFieldMap>;
+      onChange(value: ObjectValue<ObjectFieldMap>): void;
     };
     readonly fields: {
       readonly [Key in keyof ObjectFieldMap]: ReturnType<
@@ -99,7 +99,7 @@ type ObjectFieldMapToField<
       >;
     };
   } & ValidationResult<
-    ObjectValueFromFieldMap<ObjectFieldMap>,
+    ObjectValue<ObjectFieldMap>,
     ValidatedValue,
     ValidationError
   >,
@@ -114,14 +114,8 @@ type ObjectFieldMapToField<
   ValidationError
 >;
 
-type ObjectValueFromFieldMap<ObjectFieldMap extends ObjectFieldBase> = {
-  readonly [Key in keyof ObjectFieldMap]: ReturnType<
-    ObjectFieldMap[Key]["getInitialValue"]
-  >;
-};
-
 type PreviousResult<ObjectFieldMap extends ObjectFieldBase> = ValidationResult<
-  ObjectValueFromFieldMap<ObjectFieldMap>,
+  ObjectValue<ObjectFieldMap>,
   {
     readonly [Key in keyof ObjectFieldMap]: ValidatedFormValue<
       ObjectFieldMap[Key]
