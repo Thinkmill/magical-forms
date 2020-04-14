@@ -1,7 +1,30 @@
 import { ChangeEvent } from "react";
-import { ValidationFn, makeField } from "./types";
+import { ValidationFn, makeField, Field } from "./types";
 import { object } from "./object";
 import { array } from "./array";
+
+type Yes = { yes: true };
+
+type DoThing<Val> = [Val] extends [(...args: any) => any]
+  ? {
+      parameters: Parameters<Val>;
+    }
+  : Yes;
+
+function x<
+  Options extends { key?: (...args: any) => any | undefined } | undefined
+>(thing?: Options): Options extends object ? DoThing<Options["key"]> : Yes {
+  if (thing === undefined) {
+    return { thing: true } as any;
+  }
+  return {
+    parameters: [] as any[],
+  } as any;
+}
+
+let thing = x({ key: (thing: string) => "" });
+
+let thing2 = x();
 
 export const field = {
   object,

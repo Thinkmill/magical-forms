@@ -10,7 +10,7 @@ import { runValidationFunction } from "./validation";
 
 type ArrayField<
   InternalField extends Field<any, any, any, any, any, any>,
-  ValidatedValue,
+  ValidatedValue extends FormValue<InternalField>[],
   ValidationError
 > = Field<
   FormValue<InternalField>[],
@@ -90,3 +90,7 @@ export const array = <
     validate,
   };
 };
+
+type X = ValidationResult<string | undefined, string, string>;
+
+type Yes = Extract<X, { validity: "valid" }>;
