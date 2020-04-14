@@ -28,6 +28,8 @@ let testForm = field.object({
 
 export default function Index() {
   let form = useForm(testForm);
+  console.log(form.error);
+
   return (
     <form
       onSubmit={(event) => {
@@ -35,7 +37,6 @@ export default function Index() {
         form.fields.another;
         form.value.something;
         let _x: string | undefined = form.value.another;
-
         if (form.validity === "valid") {
           alert(form.value.other);
           let _x: string = form.value.another;

@@ -137,8 +137,8 @@ type PreviousResult<ObjectFieldMap extends ObjectFieldBase> = ValidationResult<
     >;
   },
   {
-    readonly [Key in keyof ObjectFieldMap]: FormValidationError<
-      ObjectFieldMap[Key]
+    readonly [Key in keyof ObjectFieldMap]: ReturnType<
+      ObjectFieldMap[Key]["validate"]
     >;
   }
 >;
@@ -225,7 +225,7 @@ export function object<
       ),
     getInitialMeta: (value) => ({
       fields: mapObject(fields, (sourceKey, sourceValue) =>
-        sourceValue.getInitialValue(value[sourceKey])
+        sourceValue.getInitialMeta(value[sourceKey])
       ),
     }),
     validate: (value) => {
@@ -235,22 +235,23 @@ export function object<
       let areAllFieldsValid = Object.values(innerResult).every(
         (value) => value.validity === "valid"
       );
-      let errors = mapObject(
-        innerResult,
-        (_sourceKey, sourceValue) => sourceValue.error
-      );
       if (options === undefined || options.validate === undefined) {
         return areAllFieldsValid
           ? validation.valid(value)
-          : validation.invalid(errors);
+          : validation.invalid(innerResult);
       }
       return options.validate(
         // @ts-ignore
-        {
-          validity: areAllFieldsValid ? "valid" : "invalid",
-          value,
-          error: areAllFieldsValid ? undefined : errors,
-        }
+        areAllFieldsValid
+          ? {
+              validity: "valid" as const,
+              value,
+            }
+          : {
+              validity: "invalid",
+              value,
+              error: innerResult,
+            }
       );
     },
   };
