@@ -6,6 +6,7 @@ import {
   ValidationResult,
   ValidatedFormValue,
   FormValidationError,
+  FormValue,
 } from "./types";
 import { runValidationFunction, validation } from "./validation";
 
@@ -43,41 +44,43 @@ type ObjectValidationFn<
 
 type ObjectFieldBase = { [key: string]: Field<any, any, any, any, any, any> };
 
+type DefaultObjectValidationFn<
+  ObjectFieldMap extends ObjectFieldBase
+> = ObjectValidationFn<
+  ObjectFieldMap,
+  ObjectValidatedInternalValue<ObjectFieldMap>,
+  ObjectValidationResults<ObjectFieldMap>
+>;
+
 type ValidationOptionToValidationFn<
   ObjectFieldMap extends ObjectFieldBase,
   ValidationFunction extends ObjectValidationFn<ObjectFieldMap> | undefined
 > = [ValidationFunction] extends [ObjectValidationFn<ObjectFieldMap>]
   ? ValidationFunction
-  : ObjectValidationFn<
-      ObjectFieldMap,
-      ObjectValidatedInternalValue<ObjectFieldMap>,
-      undefined
-    >;
+  : DefaultObjectValidationFn<ObjectFieldMap>;
 
 type ObjectOptionsToDefaultOptions<
   ObjectFieldMap extends ObjectFieldBase,
   Obj extends OptionsBase<ObjectFieldMap>
-> = [Obj] extends [OptionsBaseNonNullable<ObjectFieldMap>]
-  ? {
-      validate: ValidationOptionToValidationFn<ObjectFieldMap, Obj["validate"]>;
-    }
-  : {
-      validate: ObjectValidationFn<
-        ObjectValue<ObjectFieldMap>,
-        ObjectValidatedInternalValue<ObjectFieldMap>,
-        undefined
-      >;
-    };
+> = {
+  validate: [Obj] extends [OptionsBaseNonNullable<ObjectFieldMap>]
+    ? ValidationOptionToValidationFn<ObjectFieldMap, Obj["validate"]>
+    : DefaultObjectValidationFn<ObjectFieldMap>;
+};
 
 type ObjectValue<ObjectFieldMap extends ObjectFieldBase> = {
-  readonly [Key in keyof ObjectFieldMap]: ReturnType<
-    ObjectFieldMap[Key]["getInitialValue"]
-  >;
+  readonly [Key in keyof ObjectFieldMap]: FormValue<ObjectFieldMap[Key]>;
 };
 
 type ObjectValidatedInternalValue<ObjectFieldMap extends ObjectFieldBase> = {
   readonly [Key in keyof ObjectFieldMap]: ValidationFunctionToValidatedValue<
     ObjectValue<ObjectFieldMap>,
+    ObjectFieldMap[Key]["validate"]
+  >;
+};
+
+type ObjectValidationResults<ObjectFieldMap extends ObjectFieldBase> = {
+  readonly [Key in keyof ObjectFieldMap]: ReturnType<
     ObjectFieldMap[Key]["validate"]
   >;
 };
