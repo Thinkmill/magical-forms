@@ -144,6 +144,7 @@ export type BasicField<
   Value,
   Props,
   Options,
+  Meta = { touched: boolean },
   InputType = Value | undefined
 > = Field<
   Value,
@@ -161,7 +162,7 @@ export type BasicField<
   > & {
     props: Props;
   },
-  { touched: boolean },
+  Meta,
   ValidationFunctionToValidatedValue<
     Value,
     OptionsToDefaultOptions<Value, Options>["validate"]
