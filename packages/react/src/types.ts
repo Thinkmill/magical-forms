@@ -79,32 +79,6 @@ export type Field<
   readonly validate: ValidationFn<Value, ValidatedValue, ValidationError>;
 };
 
-export function makeField<
-  Value,
-  InitialFieldValueInputType,
-  Input extends ValidationResult<Value, ValidatedValue, ValidationError>,
-  Meta,
-  ValidatedValue extends Value,
-  ValidationError
->(
-  field: Field<
-    Value,
-    InitialFieldValueInputType,
-    Input,
-    Meta,
-    ValidatedValue,
-    ValidationError
-  >
-): Field<
-  Value,
-  InitialFieldValueInputType,
-  Input,
-  Meta,
-  ValidatedValue,
-  ValidationError
-> {
-  return field;
-}
 export type BasicOptions<Value> = NonNullableBaseOptions<Value> | undefined;
 
 type NonNullableBaseOptions<Value> = {
