@@ -5,19 +5,10 @@ import {
   InitialFieldValueInput,
   ValidationResult,
   ValidatedFormValue,
-  FormValidationError,
+  ValidationFunctionToValidatedValue,
   FormValue,
 } from "./types";
 import { runValidationFunction, validation } from "./validation";
-
-export type ValidationFunctionToValidatedValue<
-  Value,
-  ValidationFunction extends (
-    ...args: any
-  ) =>
-    | { readonly validity: "valid"; readonly value: Value }
-    | { readonly validity: "invalid"; readonly error: unknown }
-> = Extract<ReturnType<ValidationFunction>, { validity: "valid" }>["value"];
 
 export type ValidationFunctionToValidationError<
   ObjectFieldMap extends ObjectFieldBase,
