@@ -44,7 +44,11 @@ type ValidationOptionToValidationFn<
   ValidationFunction extends ObjectValidationFn<ObjectFieldMap> | undefined
 > = [ValidationFunction] extends [ObjectValidationFn<ObjectFieldMap>]
   ? ValidationFunction
-  : ObjectValidationFn<ObjectFieldMap, ObjectValue<ObjectFieldMap>, undefined>;
+  : ObjectValidationFn<
+      ObjectFieldMap,
+      ObjectValidatedInternalValue<ObjectFieldMap>,
+      undefined
+    >;
 
 type ObjectOptionsToDefaultOptions<
   ObjectFieldMap extends ObjectFieldBase,
@@ -56,7 +60,7 @@ type ObjectOptionsToDefaultOptions<
   : {
       validate: ObjectValidationFn<
         ObjectValue<ObjectFieldMap>,
-        ObjectValue<ObjectFieldMap>,
+        ObjectValidatedInternalValue<ObjectFieldMap>,
         undefined
       >;
     };
@@ -64,6 +68,12 @@ type ObjectOptionsToDefaultOptions<
 type ObjectValue<ObjectFieldMap extends ObjectFieldBase> = {
   readonly [Key in keyof ObjectFieldMap]: ReturnType<
     ObjectFieldMap[Key]["getInitialValue"]
+  >;
+};
+
+type ObjectValidatedInternalValue<ObjectFieldMap extends ObjectFieldBase> = {
+  readonly [Key in keyof ObjectFieldMap]: ValidatedFormValue<
+    ObjectFieldMap[Key]
   >;
 };
 
