@@ -199,12 +199,10 @@ export function object<
           sourceValue.getField({
             ...runValidationFunction(
               sourceValue.validate,
-              // @ts-ignore
               input.value[sourceKey]
             ),
             setValue: (val: any) => {
               input.setValue({
-                // @ts-ignore
                 ...input.value,
                 [sourceKey]: val,
               });
