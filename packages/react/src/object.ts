@@ -179,7 +179,7 @@ export function object<
       return {
         ...input,
         props: {
-          value: input.value as ObjectValueFromFieldMap<ObjectFieldMap>,
+          value: input.value as ObjectValue<ObjectFieldMap>,
           onChange: input.setValue,
         },
         fields: mapObject(fields, (sourceKey, sourceValue) =>
