@@ -105,3 +105,69 @@ export function makeField<
 > {
   return field;
 }
+export type BasicOptions<Value> = NonNullableBaseOptions<Value> | undefined;
+
+type NonNullableBaseOptions<Value> = {
+  validate?: ValidationFn<Value, Value, unknown> | undefined;
+};
+
+type ValidationOptionToValidationFn<
+  Value,
+  ValidationFunction extends ValidationFn<Value, Value, unknown> | undefined
+> = [ValidationFunction] extends [ValidationFn<Value, Value, unknown>]
+  ? ValidationFunction
+  : ValidationFn<Value, Value, undefined>;
+
+type OptionsToDefaultOptions<Value, Obj extends BasicOptions<Value>> = [
+  Obj
+] extends [NonNullableBaseOptions<Value>]
+  ? {
+      validate: ValidationOptionToValidationFn<Value, Obj["validate"]>;
+    }
+  : {
+      validate: ValidationFn<Value, Value, undefined>;
+    };
+
+type ValidationFunctionToValidatedValue<
+  Value,
+  ValidationFunction extends ValidationFn<Value, Value, unknown>
+> = Extract<ReturnType<ValidationFunction>, { validity: "valid" }>["value"];
+
+type ValidationFunctionToValidationError<
+  Value,
+  ValidationFunction extends ValidationFn<Value, Value, unknown>
+> = ValidationFunction extends ValidationFn<Value, Value, infer ValidationError>
+  ? ValidationError
+  : undefined;
+
+export type BasicField<
+  Value,
+  Props,
+  Options,
+  InputType = Value | undefined
+> = Field<
+  Value,
+  InputType,
+  ValidationResult<
+    Value,
+    ValidationFunctionToValidatedValue<
+      Value,
+      OptionsToDefaultOptions<Value, Options>["validate"]
+    >,
+    ValidationFunctionToValidationError<
+      Value,
+      OptionsToDefaultOptions<Value, Options>["validate"]
+    >
+  > & {
+    props: Props;
+  },
+  { touched: boolean },
+  ValidationFunctionToValidatedValue<
+    Value,
+    OptionsToDefaultOptions<Value, Options>["validate"]
+  >,
+  ValidationFunctionToValidationError<
+    Value,
+    OptionsToDefaultOptions<Value, Options>["validate"]
+  >
+>;

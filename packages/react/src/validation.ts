@@ -23,6 +23,12 @@ export function runValidationFunction<
   } as const;
 }
 
+export function getDefaultValidate(options: any) {
+  return options !== undefined && options.validate !== undefined
+    ? options.validate
+    : (val: any) => validation.valid(val);
+}
+
 export const validation = {
   valid<ValidValue>(value: ValidValue) {
     return { validity: "valid" as const, value } as const;

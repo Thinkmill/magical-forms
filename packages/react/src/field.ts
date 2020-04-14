@@ -1,7 +1,14 @@
 import { ChangeEvent } from "react";
-import { ValidationFn, makeField, Field } from "./types";
+import {
+  ValidationFn,
+  makeField,
+  Field,
+  BasicOptions,
+  BasicField,
+} from "./types";
 import { object } from "./object";
 import { array } from "./array";
+import { getDefaultValidate } from "./validation";
 
 type Yes = { yes: true };
 
@@ -46,36 +53,41 @@ export const field = {
       getInitialMeta: () => ({}),
       validate,
     }),
-  text: <ValidatedValue extends string | undefined, ValidationError>({
-    validate,
-  }: {
-    validate: ValidationFn<string | undefined, ValidatedValue, ValidationError>;
-  }) =>
-    makeField({
-      getField(input) {
-        return {
-          ...input,
-          props: {
-            value: (input.value as string) || "",
-            onChange(event: ChangeEvent<HTMLInputElement>) {
-              let val = event.target.value;
-              input.setValue(val === "" ? undefined : val);
-            },
-            onBlur() {
-              if (input.meta.touched === false) {
-                input.setMeta({ touched: true });
-              }
-            },
+  text: <Options extends BasicOptions<string | undefined>>(
+    options?: Options
+  ): BasicField<
+    string | undefined,
+    {
+      value: string;
+      onChange(event: ChangeEvent<HTMLInputElement>): void;
+      onBlur(): void;
+    },
+    Options
+  > => ({
+    getField(input) {
+      return {
+        ...input,
+        props: {
+          value: (input.value as string) || "",
+          onChange(event: ChangeEvent<HTMLInputElement>) {
+            let val = event.target.value;
+            input.setValue(val === "" ? undefined : val);
           },
-        };
-      },
-      getInitialValue: (initialValueInput: string | undefined) =>
-        initialValueInput,
-      getInitialMeta: () => ({
-        touched: false,
-      }),
-      validate,
+          onBlur() {
+            if (input.meta.touched === false) {
+              input.setMeta({ touched: true });
+            }
+          },
+        },
+      };
+    },
+    getInitialValue: (initialValueInput: string | undefined) =>
+      initialValueInput,
+    getInitialMeta: () => ({
+      touched: false,
     }),
+    validate: getDefaultValidate(options),
+  }),
   number: <ValidatedValue extends number | undefined, ValidationError>({
     validate,
   }: {
