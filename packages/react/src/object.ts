@@ -116,16 +116,8 @@ type ObjectFieldMapToField<
 
 type PreviousResult<ObjectFieldMap extends ObjectFieldBase> = ValidationResult<
   ObjectValue<ObjectFieldMap>,
-  {
-    readonly [Key in keyof ObjectFieldMap]: ValidatedFormValue<
-      ObjectFieldMap[Key]
-    >;
-  },
-  {
-    readonly [Key in keyof ObjectFieldMap]: ReturnType<
-      ObjectFieldMap[Key]["validate"]
-    >;
-  }
+  ObjectValidatedInternalValue<ObjectFieldMap>,
+  ObjectValidationResults<ObjectFieldMap>
 >;
 
 type OptionsBase<ObjectFieldMap extends ObjectFieldBase> =
