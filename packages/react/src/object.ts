@@ -9,23 +9,69 @@ import {
 } from "./types";
 import { runValidationFunction, validation } from "./validation";
 
-export type ObjectValidationFn<PrevResult, ValidatedValue, ValidationError> = (
-  value: PrevResult
+export type ValidationFunctionToValidatedValue<
+  ObjectFieldMap extends ObjectFieldBase,
+  ValidationFunction extends ObjectValidationFn<ObjectFieldMap>
+> = Extract<ReturnType<ValidationFunction>, { validity: "valid" }>["value"];
+
+export type ValidationFunctionToValidationError<
+  ObjectFieldMap extends ObjectFieldBase,
+  ValidationFunction extends ObjectValidationFn<ObjectFieldMap>
+> = ValidationFunction extends ObjectValidationFn<
+  ObjectFieldMap,
+  ObjectValue<ObjectFieldMap>,
+  infer ValidationError
+>
+  ? ValidationError
+  : undefined;
+
+type ObjectValidationFn<
+  ObjectFieldMap extends ObjectFieldBase,
+  ValidatedValue extends ObjectValue<ObjectFieldMap> = ObjectValue<
+    ObjectFieldMap
+  >,
+  ValidationError = unknown
+> = (
+  value: PreviousResult<ObjectFieldMap>
 ) =>
   | { validity: "valid"; value: ValidatedValue }
   | { validity: "invalid"; error: ValidationError };
 
 type ObjectFieldBase = { [key: string]: Field<any, any, any, any, any, any> };
 
+type ValidationOptionToValidationFn<
+  ObjectFieldMap extends ObjectFieldBase,
+  ValidationFunction extends ObjectValidationFn<ObjectFieldMap> | undefined
+> = [ValidationFunction] extends [ObjectValidationFn<ObjectFieldMap>]
+  ? ValidationFunction
+  : ObjectValidationFn<ObjectFieldMap, ObjectValue<ObjectFieldMap>, undefined>;
+
+type ObjectOptionsToDefaultOptions<
+  ObjectFieldMap extends ObjectFieldBase,
+  Obj extends OptionsBase<ObjectFieldMap>
+> = [Obj] extends [OptionsBaseNonNullable<ObjectFieldMap>]
+  ? {
+      validate: ValidationOptionToValidationFn<ObjectFieldMap, Obj["validate"]>;
+    }
+  : {
+      validate: ObjectValidationFn<
+        ObjectValue<ObjectFieldMap>,
+        ObjectValue<ObjectFieldMap>,
+        undefined
+      >;
+    };
+
+type ObjectValue<ObjectFieldMap extends ObjectFieldBase> = {
+  readonly [Key in keyof ObjectFieldMap]: ReturnType<
+    ObjectFieldMap[Key]["getInitialValue"]
+  >;
+};
+
 type ObjectFieldMapToField<
   ObjectFieldMap extends ObjectFieldBase,
-  ValidationFunction extends ObjectValidationFnBase<ObjectFieldMap>
+  Options extends OptionsBase<ObjectFieldMap> | undefined
 > = Field<
-  {
-    readonly [Key in keyof ObjectFieldMap]: ReturnType<
-      ObjectFieldMap[Key]["getInitialValue"]
-    >;
-  },
+  ObjectValue<ObjectFieldMap>,
   | {
       [Key in keyof ObjectFieldMap]?: InitialFieldValueInput<
         ObjectFieldMap[Key]
@@ -44,8 +90,14 @@ type ObjectFieldMapToField<
     };
   } & ValidationResult<
     ObjectValueFromFieldMap<ObjectFieldMap>,
-    GetValidatedValueFromValidationFn<ValidationFunction>,
-    GetValidationErrorFromValidationFn<ValidationFunction>
+    ValidationFunctionToValidatedValue<
+      ObjectFieldMap,
+      ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
+    >,
+    ValidationFunctionToValidationError<
+      ObjectFieldMap,
+      ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
+    >
   >,
   {
     fields: {
@@ -54,22 +106,15 @@ type ObjectFieldMapToField<
       >;
     };
   },
-  // @ts-ignore
-  GetValidatedValueFromValidationFn<ValidationFunction>,
-  GetValidationErrorFromValidationFn<ValidationFunction>
+  ValidationFunctionToValidatedValue<
+    ObjectFieldMap,
+    ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
+  >,
+  ValidationFunctionToValidationError<
+    ObjectFieldMap,
+    ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
+  >
 >;
-
-type GetValidationErrorFromValidationFn<
-  ValidationOption
-> = ValidationOption extends ObjectValidationFn<any, any, infer ValidationError>
-  ? ValidationError
-  : never;
-
-type GetValidatedValueFromValidationFn<
-  ValidationOption
-> = ValidationOption extends ObjectValidationFn<any, infer ValidatedValue, any>
-  ? ValidatedValue
-  : never;
 
 type ObjectValueFromFieldMap<ObjectFieldMap extends ObjectFieldBase> = {
   readonly [Key in keyof ObjectFieldMap]: ReturnType<
@@ -77,35 +122,26 @@ type ObjectValueFromFieldMap<ObjectFieldMap extends ObjectFieldBase> = {
   >;
 };
 
-type ObjectValidationFnBase<
-  ObjectFieldMap extends ObjectFieldBase
-> = ObjectValidationFn<
-  ValidationResult<
-    ObjectValueFromFieldMap<ObjectFieldMap>,
-    {
-      readonly [Key in keyof ObjectFieldMap]: ValidatedFormValue<
-        ObjectFieldMap[Key]
-      >;
-    },
-    {
-      readonly [Key in keyof ObjectFieldMap]: FormValidationError<
-        ObjectFieldMap[Key]
-      >;
-    }
-  >,
+type PreviousResult<ObjectFieldMap extends ObjectFieldBase> = ValidationResult<
+  ObjectValueFromFieldMap<ObjectFieldMap>,
   {
     readonly [Key in keyof ObjectFieldMap]: ValidatedFormValue<
       ObjectFieldMap[Key]
     >;
   },
-  any
+  {
+    readonly [Key in keyof ObjectFieldMap]: FormValidationError<
+      ObjectFieldMap[Key]
+    >;
+  }
 >;
 
-type ValidateOptionBase<
-  ObjectFieldMap extends ObjectFieldBase
-> = ObjectValidationFnBase<ObjectFieldMap>;
-
-type Identity = <T>(t: T) => T;
+type OptionsBase<ObjectFieldMap extends ObjectFieldBase> =
+  | OptionsBaseNonNullable<ObjectFieldMap>
+  | undefined;
+type OptionsBaseNonNullable<ObjectFieldMap extends ObjectFieldBase> = {
+  validate?: ObjectValidationFn<ObjectFieldMap>;
+};
 
 // ? ObjectValidationFn<
 //     ValidationResult<
@@ -131,15 +167,11 @@ type Identity = <T>(t: T) => T;
 
 export function object<
   ObjectFieldMap extends ObjectFieldBase,
-  ValidationFunction extends ValidateOptionBase<ObjectFieldMap>
+  Options extends OptionsBase<ObjectFieldMap>
 >(
   fields: ObjectFieldMap,
-  {
-    validate,
-  }: {
-    validate?: ValidationFunction;
-  } = {}
-): ObjectFieldMapToField<ObjectFieldMap, ValidationFunction> {
+  options?: Options
+): ObjectFieldMapToField<ObjectFieldMap, Options> {
   return {
     getField(input) {
       return {
@@ -192,12 +224,12 @@ export function object<
         innerResult,
         (_sourceKey, sourceValue) => sourceValue.error
       );
-      if (validate === undefined) {
+      if (options === undefined || options.validate === undefined) {
         return areAllFieldsValid
           ? validation.valid(value)
           : validation.invalid(errors);
       }
-      return validate(
+      return options.validate(
         // @ts-ignore
         {
           validity: areAllFieldsValid ? "valid" : "invalid",

@@ -19,28 +19,21 @@ let textField = field.text({
   },
 });
 
-let testForm = field.object(
-  {
-    something: textField,
-    another: field.text({
-      validate(val) {
-        if (val === undefined) return validation.invalid("yes" as const);
-        return validation.valid(val);
-      },
-    }),
-    other: field.select({
-      validate(value) {
-        if (value === undefined) return validation.invalid("required");
-        return validation.valid(value);
-      },
-    }),
-  },
-  {
-    validate(x) {
-      return x;
+let testForm = field.object({
+  something: textField,
+  another: field.text({
+    validate(val) {
+      if (val === undefined) return validation.invalid("yes" as const);
+      return validation.valid(val);
     },
-  }
-);
+  }),
+  other: field.select({
+    validate(value) {
+      if (value === undefined) return validation.invalid("required");
+      return validation.valid(value);
+    },
+  }),
+});
 
 export default function Index() {
   let form = useForm(testForm);

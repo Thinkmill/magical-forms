@@ -118,7 +118,7 @@ type ValidationOptionToValidationFn<
   ? ValidationFunction
   : ValidationFn<Value, Value, undefined>;
 
-type OptionsToDefaultOptions<Value, Obj extends BasicOptions<Value>> = [
+export type OptionsToDefaultOptions<Value, Obj extends BasicOptions<Value>> = [
   Obj
 ] extends [NonNullableBaseOptions<Value>]
   ? {
@@ -128,12 +128,12 @@ type OptionsToDefaultOptions<Value, Obj extends BasicOptions<Value>> = [
       validate: ValidationFn<Value, Value, undefined>;
     };
 
-type ValidationFunctionToValidatedValue<
+export type ValidationFunctionToValidatedValue<
   Value,
   ValidationFunction extends ValidationFn<Value, Value, unknown>
 > = Extract<ReturnType<ValidationFunction>, { validity: "valid" }>["value"];
 
-type ValidationFunctionToValidationError<
+export type ValidationFunctionToValidationError<
   Value,
   ValidationFunction extends ValidationFn<Value, Value, unknown>
 > = ValidationFunction extends ValidationFn<Value, Value, infer ValidationError>
