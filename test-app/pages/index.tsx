@@ -10,114 +10,108 @@ import {
 } from "@magical-forms/react";
 import { RawTypes } from "@magical-types/macro/write-data-to-fs.macro";
 
-type BaseOptions = NonNullableBaseOptions | undefined;
+type BaseOptions<Value> = NonNullableBaseOptions<Value> | undefined;
 
-type NonNullableBaseOptions = {
-  validate?:
-    | ValidationFn<string | undefined, string | undefined, unknown>
-    | undefined;
+type NonNullableBaseOptions<Value> = {
+  validate?: ValidationFn<Value, Value, unknown> | undefined;
 };
 
 type ValidationOptionToValidationFn<
-  ValidationFunction extends
-    | ValidationFn<string | undefined, string | undefined, unknown>
-    | undefined
-> = [ValidationFunction] extends [
-  ValidationFn<string | undefined, string | undefined, unknown>
-]
+  Value,
+  ValidationFunction extends ValidationFn<Value, Value, unknown> | undefined
+> = [ValidationFunction] extends [ValidationFn<Value, Value, unknown>]
   ? ValidationFunction
-  : ValidationFn<string | undefined, string | undefined, undefined>;
+  : ValidationFn<Value, Value, undefined>;
 
-type OptionsToDefaultOptions<Obj extends BaseOptions> = [Obj] extends [
-  NonNullableBaseOptions
-]
+type OptionsToDefaultOptions<Value, Obj extends BaseOptions<Value>> = [
+  Obj
+] extends [NonNullableBaseOptions<Value>]
   ? {
-      validate: ValidationOptionToValidationFn<Obj["validate"]>;
+      validate: ValidationOptionToValidationFn<Value, Obj["validate"]>;
     }
   : {
-      validate: ValidationFn<string | undefined, string | undefined, undefined>;
+      validate: ValidationFn<Value, Value, undefined>;
     };
 
-function applyDefaultOptions<Options extends BaseOptions>(
-  options?: Options
-): OptionsToDefaultOptions<Options> {
-  return {
-    validate:
-      options !== undefined && options.validate !== undefined
-        ? options.validate
-        : (val: string | undefined) => validation.valid(val),
-  } as any;
+function getDefaultValidate(options: any) {
+  return options !== undefined && options.validate !== undefined
+    ? options.validate
+    : (val: any) => validation.valid(val);
 }
 
 type ValidationFunctionToValidatedValue<
-  ValidationFunction extends ValidationFn<
-    string | undefined,
-    string | undefined,
-    unknown
-  >
+  Value,
+  ValidationFunction extends ValidationFn<Value, Value, unknown>
 > = Extract<ReturnType<ValidationFunction>, { validity: "valid" }>["value"];
 
 type ValidationFunctionToValidationError<
-  ValidationFunction extends ValidationFn<
-    string | undefined,
-    string | undefined,
-    unknown
-  >
-> = Extract<ReturnType<ValidationFunction>, { validity: "invalid" }>["error"];
+  Value,
+  ValidationFunction extends ValidationFn<Value, Value, unknown>
+> = ValidationFunction extends ValidationFn<Value, Value, infer ValidationError>
+  ? ValidationError
+  : undefined;
 
-let text = <Options extends BaseOptions>(
-  options?: Options
-): Field<
-  string | undefined,
-  string | undefined,
+type BasicField<Value, Props, Options> = Field<
+  Value,
+  Value,
   ValidationResult<
-    string | undefined,
+    Value,
     ValidationFunctionToValidatedValue<
-      OptionsToDefaultOptions<Options>["validate"]
+      Value,
+      OptionsToDefaultOptions<Value, Options>["validate"]
     >,
     ValidationFunctionToValidationError<
-      OptionsToDefaultOptions<Options>["validate"]
+      Value,
+      OptionsToDefaultOptions<Value, Options>["validate"]
     >
   > & {
-    props: {
-      value: string;
-      onChange(event: ChangeEvent<HTMLInputElement>): void;
-      onBlur(): void;
-    };
+    props: Props;
   },
   { touched: boolean },
   ValidationFunctionToValidatedValue<
-    OptionsToDefaultOptions<Options>["validate"]
+    Value,
+    OptionsToDefaultOptions<Value, Options>["validate"]
   >,
   ValidationFunctionToValidationError<
-    OptionsToDefaultOptions<Options>["validate"]
+    Value,
+    OptionsToDefaultOptions<Value, Options>["validate"]
   >
-> =>
-  makeField({
-    getField(input) {
-      return {
-        ...input,
-        props: {
-          value: (input.value as string) || "",
-          onChange(event: ChangeEvent<HTMLInputElement>) {
-            let val = event.target.value;
-            input.setValue(val === "" ? undefined : val);
-          },
-          onBlur() {
-            if (input.meta.touched === false) {
-              input.setMeta({ touched: true });
-            }
-          },
+>;
+
+let text = <Options extends BaseOptions<string | undefined>>(
+  options?: Options
+): BasicField<
+  string | undefined,
+  {
+    value: string;
+    onChange(event: ChangeEvent<HTMLInputElement>): void;
+    onBlur(): void;
+  },
+  Options
+> => ({
+  getField(input) {
+    return {
+      ...input,
+      props: {
+        value: (input.value as string) || "",
+        onChange(event: ChangeEvent<HTMLInputElement>) {
+          let val = event.target.value;
+          input.setValue(val === "" ? undefined : val);
         },
-      } as any;
-    },
-    getInitialValue: (initialValueInput: string | undefined) =>
-      initialValueInput,
-    getInitialMeta: () => ({
-      touched: false as boolean,
-    }),
-    validate: applyDefaultOptions(options).validate as any,
-  });
+        onBlur() {
+          if (input.meta.touched === false) {
+            input.setMeta({ touched: true });
+          }
+        },
+      },
+    };
+  },
+  getInitialValue: (initialValueInput: string | undefined) => initialValueInput,
+  getInitialMeta: () => ({
+    touched: false,
+  }),
+  validate: getDefaultValidate(options),
+});
 
 let textField = text({
   validate: (value) => {
@@ -157,9 +151,12 @@ export default function Index() {
     <form
       onSubmit={(event) => {
         event.preventDefault();
+        form.fields.another;
         form.value.something;
         if (form.validity === "valid") {
           alert(form.value.other);
+          let _x: string = form.value.another;
+          let _y: "yes" | undefined = form.fields.another.error;
         }
       }}
     >
