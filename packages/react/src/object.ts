@@ -8,8 +8,16 @@ import {
   FormValue,
 } from "./types";
 import { runValidationFunction, validation } from "./validation";
+import {
+  OptionsBase,
+  ValidatedValueFromOptions,
+  ValidationErrorFromOptions,
+  CompositeTypes,
+} from "./composite-types";
 
-type ObjectFieldBase = { [key: string]: Field<any, any, any, any, any, any> };
+type ObjectFieldBase = {
+  [key: string]: Field<any, any, any, any, any, any>;
+};
 
 type ObjectValue<ObjectFieldMap extends ObjectFieldBase> = {
   readonly [Key in keyof ObjectFieldMap]: FormValue<ObjectFieldMap[Key]>;
@@ -28,59 +36,21 @@ type ObjectValidationResults<ObjectFieldMap extends ObjectFieldBase> = {
   >;
 };
 
-export type ValidationFunctionToValidationError<
-  ObjectFieldMap extends ObjectFieldBase,
-  ValidationFunction extends ObjectValidationFn<ObjectFieldMap>
-> = ValidationFunction extends ObjectValidationFn<
-  ObjectFieldMap,
-  ObjectValue<ObjectFieldMap>,
-  infer ValidationError
->
-  ? ValidationError
-  : undefined;
-
-type ObjectValidationFn<
-  ObjectFieldMap extends ObjectFieldBase,
-  ValidatedValue extends ObjectValue<ObjectFieldMap> = ObjectValue<
-    ObjectFieldMap
-  >,
-  ValidationError = unknown
-> = (
-  value: PreviousResult<ObjectFieldMap>
-) =>
-  | { validity: "valid"; value: ValidatedValue }
-  | { validity: "invalid"; error: ValidationError };
-
-type DefaultObjectValidationFn<
+type ObjectCompositeTypes<
   ObjectFieldMap extends ObjectFieldBase
-> = ObjectValidationFn<
-  ObjectFieldMap,
+> = CompositeTypes<
+  ObjectValue<ObjectFieldMap>,
   ObjectValidatedInternalValue<ObjectFieldMap>,
   ObjectValidationResults<ObjectFieldMap>
 >;
 
-type ValidationOptionToValidationFn<
-  ObjectFieldMap extends ObjectFieldBase,
-  ValidationFunction extends ObjectValidationFn<ObjectFieldMap> | undefined
-> = [ValidationFunction] extends [ObjectValidationFn<ObjectFieldMap>]
-  ? ValidationFunction
-  : DefaultObjectValidationFn<ObjectFieldMap>;
-
-type ObjectOptionsToDefaultOptions<
-  ObjectFieldMap extends ObjectFieldBase,
-  Options extends OptionsBase<ObjectFieldMap>
-> = {
-  validate: [Options] extends [OptionsBaseNonNullable<ObjectFieldMap>]
-    ? ValidationOptionToValidationFn<ObjectFieldMap, Options["validate"]>
-    : DefaultObjectValidationFn<ObjectFieldMap>;
-};
-
 type ObjectFieldMapToField<
   ObjectFieldMap extends ObjectFieldBase,
-  ValidatedValue extends ObjectValue<ObjectFieldMap>,
+  SpecificCompositeTypes extends ObjectCompositeTypes<ObjectFieldMap>,
+  ValidatedValue extends SpecificCompositeTypes["value"],
   ValidationError
 > = Field<
-  ObjectValue<ObjectFieldMap>,
+  SpecificCompositeTypes["value"],
   | {
       [Key in keyof ObjectFieldMap]?: InitialFieldValueInput<
         ObjectFieldMap[Key]
@@ -89,8 +59,8 @@ type ObjectFieldMapToField<
   | undefined,
   {
     readonly props: {
-      value: ObjectValue<ObjectFieldMap>;
-      onChange(value: ObjectValue<ObjectFieldMap>): void;
+      value: SpecificCompositeTypes["value"];
+      onChange(value: SpecificCompositeTypes["value"]): void;
     };
     readonly fields: {
       readonly [Key in keyof ObjectFieldMap]: ReturnType<
@@ -113,35 +83,17 @@ type ObjectFieldMapToField<
   ValidationError
 >;
 
-type PreviousResult<ObjectFieldMap extends ObjectFieldBase> = ValidationResult<
-  ObjectValue<ObjectFieldMap>,
-  ObjectValidatedInternalValue<ObjectFieldMap>,
-  ObjectValidationResults<ObjectFieldMap>
->;
-
-type OptionsBase<ObjectFieldMap extends ObjectFieldBase> =
-  | OptionsBaseNonNullable<ObjectFieldMap>
-  | undefined;
-type OptionsBaseNonNullable<ObjectFieldMap extends ObjectFieldBase> = {
-  validate?: ObjectValidationFn<ObjectFieldMap>;
-};
-
 export function object<
   ObjectFieldMap extends ObjectFieldBase,
-  Options extends OptionsBase<ObjectFieldMap>
+  Options extends OptionsBase<ObjectCompositeTypes<ObjectFieldMap>>
 >(
   fields: ObjectFieldMap,
   options?: Options
 ): ObjectFieldMapToField<
   ObjectFieldMap,
-  ValidationFunctionToValidatedValue<
-    ObjectValue<ObjectFieldMap>,
-    ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
-  >,
-  ValidationFunctionToValidationError<
-    ObjectFieldMap,
-    ObjectOptionsToDefaultOptions<ObjectFieldMap, Options>["validate"]
-  >
+  ObjectCompositeTypes<ObjectFieldMap>,
+  ValidatedValueFromOptions<ObjectCompositeTypes<ObjectFieldMap>, Options>,
+  ValidationErrorFromOptions<ObjectCompositeTypes<ObjectFieldMap>, Options>
 > {
   return {
     getField(input) {
