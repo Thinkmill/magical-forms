@@ -10,7 +10,14 @@ let textField = field.text({
   },
 });
 
+let arrayField = field.array(field.text(), {
+  validate(x) {
+    return x;
+  },
+});
+
 let testForm = field.object({
+  thing: arrayField,
   something: textField,
   another: field.text({
     validate(val) {

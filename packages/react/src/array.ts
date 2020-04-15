@@ -4,28 +4,57 @@ import {
   InitialFieldValueInput,
   Form,
   ValidationResult,
-  ValidationFn,
+  ValidationFunctionToValidatedValue,
 } from "./types";
-import { runValidationFunction } from "./validation";
+import { runValidationFunction, validation } from "./validation";
+import {
+  CompositeTypes,
+  OptionsBase,
+  ValidatedValueFromOptions,
+  ValidationErrorFromOptions,
+} from "./composite-types";
+
+type ArrayFieldBase = Field<any, any, any, any, any, any>;
+
+type ArrayValue<InternalField extends ArrayFieldBase> = FormValue<
+  InternalField
+>[];
+
+type ArrayValidatedInternalValue<
+  InternalField extends ArrayFieldBase
+> = ValidationFunctionToValidatedValue<
+  ArrayValue<InternalField>,
+  InternalField["validate"]
+>[];
+
+type ArrayValidationResults<InternalField extends ArrayFieldBase> = ReturnType<
+  InternalField["validate"]
+>[];
+
+type ArrayCompositeTypes<InternalField extends ArrayFieldBase> = CompositeTypes<
+  ArrayValue<InternalField>,
+  ArrayValidatedInternalValue<InternalField>,
+  ArrayValidationResults<InternalField>
+>;
 
 type ArrayField<
-  InternalField extends Field<any, any, any, any, any, any>,
+  InternalField extends ArrayFieldBase,
   ValidatedValue extends FormValue<InternalField>[],
   ValidationError
 > = Field<
-  FormValue<InternalField>[],
+  ArrayValue<InternalField>,
   // TODO: think about this some more
   // I'm not sure if this is correct
   InitialFieldValueInput<InternalField>[] | undefined,
   {
     readonly props: {
-      readonly value: FormValue<InternalField>[];
+      readonly value: ArrayValue<InternalField>;
       readonly add: (value: FormValue<InternalField>) => void;
       readonly remove: (index: number) => void;
     };
     readonly items: Form<InternalField>[];
   } & ValidationResult<
-    FormValue<InternalField>[],
+    ArrayValue<InternalField>,
     ValidatedValue,
     ValidationError
   >,
@@ -37,21 +66,16 @@ type ArrayField<
 >;
 
 export const array = <
-  InternalField extends Field<any, any, any, any, any, any>,
-  ValidatedValue extends FormValue<InternalField>[],
-  ValidationError
+  InternalField extends ArrayFieldBase,
+  Options extends OptionsBase<ArrayCompositeTypes<ArrayFieldBase>>
 >(
   internalField: InternalField,
-  {
-    validate,
-  }: {
-    validate: ValidationFn<
-      FormValue<InternalField>[],
-      ValidatedValue,
-      ValidationError
-    >;
-  }
-): ArrayField<InternalField, ValidatedValue, ValidationError> => {
+  options?: Options
+): ArrayField<
+  InternalField,
+  ValidatedValueFromOptions<ArrayCompositeTypes<InternalField>, Options>,
+  ValidationErrorFromOptions<ArrayCompositeTypes<InternalField>, Options>
+> => {
   return {
     getField(input) {
       return {
@@ -59,26 +83,30 @@ export const array = <
         props: {
           value: input.value,
           add(value) {
-            input.setValue(input.value.concat([value]));
+            input.setValue(
+              (input.value as ArrayValue<InternalField>).concat([value])
+            );
           },
           remove(index) {
-            let val = [...input.value];
+            let val = [...(input.value as ArrayValue<InternalField>)];
             val.splice(index, 1);
             input.setValue(val);
           },
         },
-        items: input.value.map((internalValue, index) => {
-          return internalField.getField({
-            ...runValidationFunction(internalField.validate, internalValue),
-            setValue(newInternalValue) {
-              let newVal = [...input.value];
-              newVal[index] = newInternalValue;
-              input.setValue(newVal);
-            },
-            meta: input.meta.items[index],
-            setMeta: input.setMeta,
-          });
-        }),
+        items: (input.value as ArrayValue<InternalField>).map(
+          (internalValue, index) => {
+            return internalField.getField({
+              ...runValidationFunction(internalField.validate, internalValue),
+              setValue(newInternalValue) {
+                let newVal = [...(input.value as ArrayValue<InternalField>)];
+                newVal[index] = newInternalValue;
+                input.setValue(newVal);
+              },
+              meta: input.meta.items[index],
+              setMeta: input.setMeta,
+            });
+          }
+        ),
       };
     },
     getInitialValue: (initialValueInput = []) => {
@@ -87,10 +115,31 @@ export const array = <
     getInitialMeta: (value) => ({
       items: value.map((x) => internalField.getInitialMeta(x)),
     }),
-    validate,
+    validate: (value) => {
+      let innerResult = value.map((value) =>
+        runValidationFunction(internalField.validate, value)
+      );
+      let areAllFieldsValid = innerResult.every(
+        (value) => value.validity === "valid"
+      );
+      if (options === undefined || options.validate === undefined) {
+        return areAllFieldsValid
+          ? validation.valid(value)
+          : validation.invalid(innerResult);
+      }
+      return options.validate(
+        // @ts-ignore
+        areAllFieldsValid
+          ? {
+              validity: "valid" as const,
+              value,
+            }
+          : {
+              validity: "invalid",
+              value,
+              error: innerResult,
+            }
+      );
+    },
   };
 };
-
-type X = ValidationResult<string | undefined, string, string>;
-
-type Yes = Extract<X, { validity: "valid" }>;
