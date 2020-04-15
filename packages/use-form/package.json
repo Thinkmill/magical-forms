@@ -1,0 +1,17 @@
+{
+  "name": "@magical-forms/use-form",
+  "private": true,
+  "version": "0.0.0",
+  "main": "dist/use-form.cjs.js",
+  "module": "dist/use-form.esm.js",
+  "dependencies": {
+    "@babel/runtime": "^7.9.2",
+    "@magical-forms/validation": "^0.0.0"
+  },
+  "peerDependencies": {
+    "react": "^16.9.0"
+  },
+  "devDependencies": {
+    "react": "^16.13.1"
+  }
+}

@@ -6,14 +6,14 @@ import {
   ValidationResult,
   ValidationFunctionToValidatedValue,
   FormValue,
-} from "./types";
-import { runValidationFunction, validation } from "./validation";
+} from "@magical-forms/types";
+import { runValidationFunction, validation } from "@magical-forms/validation";
 import {
   OptionsBase,
   ValidatedValueFromOptions,
   ValidationErrorFromOptions,
   CompositeTypes,
-} from "./composite-types";
+} from "./types";
 
 type ObjectFieldBase = {
   [key: string]: Field<any, any, any, any, any, any>;

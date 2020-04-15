@@ -1,4 +1,4 @@
-import { ValidationFn, ValidationResult, ValidValidationResult } from "./types";
+import { ValidationFn, ValidationResult } from "@magical-forms/types";
 
 export function runValidationFunction<
   Value,

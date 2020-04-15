@@ -1,0 +1,7 @@
+{
+  "name": "@magical-forms/types",
+  "private": true,
+  "version": "0.0.0",
+  "main": "dist/types.cjs.js",
+  "module": "dist/types.esm.js"
+}

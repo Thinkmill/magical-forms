@@ -1,4 +1,7 @@
-import { ValidationResult, ValidationFunctionToValidatedValue } from "./types";
+import {
+  ValidationResult,
+  ValidationFunctionToValidatedValue,
+} from "@magical-forms/types";
 
 export type CompositeTypes<
   Value,

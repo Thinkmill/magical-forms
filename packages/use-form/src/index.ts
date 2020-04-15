@@ -1,6 +1,6 @@
-import { InitialFieldValueInput, Field } from "./types";
+import { InitialFieldValueInput, Field } from "@magical-forms/types";
 import { useState } from "react";
-import { runValidationFunction } from "./validation";
+import { runValidationFunction } from "@magical-forms/validation";
 
 export function useForm<FormField extends Field<any, any, any, any, any, any>>(
   field: FormField,

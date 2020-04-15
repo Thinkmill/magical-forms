@@ -1,0 +1,10 @@
+{
+  "name": "@magical-forms/validation",
+  "private": true,
+  "version": "0.0.0",
+  "main": "dist/validation.cjs.js",
+  "module": "dist/validation.esm.js",
+  "dependencies": {
+    "@magical-forms/validation": "^0.0.0"
+  }
+}

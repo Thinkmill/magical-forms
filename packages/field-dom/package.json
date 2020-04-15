@@ -1,15 +1,12 @@
 {
-  "name": "@magical-forms/react",
+  "name": "@magical-forms/field-dom",
   "private": true,
   "version": "0.0.0",
-  "main": "dist/react.cjs.js",
-  "module": "dist/react.esm.js",
+  "main": "dist/field-dom.cjs.js",
+  "module": "dist/field-dom.esm.js",
   "dependencies": {
     "@babel/runtime": "^7.9.2",
-    "@magical-forms/field-composite": "^0.0.0",
-    "@magical-forms/field-dom": "^0.0.0",
     "@magical-forms/types": "^0.0.0",
-    "@magical-forms/use-form": "^0.0.0",
     "@magical-forms/validation": "^0.0.0"
   },
   "peerDependencies": {

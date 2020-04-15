@@ -5,14 +5,14 @@ import {
   Form,
   ValidationResult,
   ValidationFunctionToValidatedValue,
-} from "./types";
-import { runValidationFunction, validation } from "./validation";
+} from "@magical-forms/types";
+import { runValidationFunction, validation } from "@magical-forms/validation";
 import {
   CompositeTypes,
   OptionsBase,
   ValidatedValueFromOptions,
   ValidationErrorFromOptions,
-} from "./composite-types";
+} from "./types";
 
 type ArrayFieldBase = Field<any, any, any, any, any, any>;
 
