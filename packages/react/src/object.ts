@@ -4,11 +4,29 @@ import {
   Field,
   InitialFieldValueInput,
   ValidationResult,
-  ValidatedFormValue,
   ValidationFunctionToValidatedValue,
   FormValue,
 } from "./types";
 import { runValidationFunction, validation } from "./validation";
+
+type ObjectFieldBase = { [key: string]: Field<any, any, any, any, any, any> };
+
+type ObjectValue<ObjectFieldMap extends ObjectFieldBase> = {
+  readonly [Key in keyof ObjectFieldMap]: FormValue<ObjectFieldMap[Key]>;
+};
+
+type ObjectValidatedInternalValue<ObjectFieldMap extends ObjectFieldBase> = {
+  readonly [Key in keyof ObjectFieldMap]: ValidationFunctionToValidatedValue<
+    ObjectValue<ObjectFieldMap>,
+    ObjectFieldMap[Key]["validate"]
+  >;
+};
+
+type ObjectValidationResults<ObjectFieldMap extends ObjectFieldBase> = {
+  readonly [Key in keyof ObjectFieldMap]: ReturnType<
+    ObjectFieldMap[Key]["validate"]
+  >;
+};
 
 export type ValidationFunctionToValidationError<
   ObjectFieldMap extends ObjectFieldBase,
@@ -33,8 +51,6 @@ type ObjectValidationFn<
   | { validity: "valid"; value: ValidatedValue }
   | { validity: "invalid"; error: ValidationError };
 
-type ObjectFieldBase = { [key: string]: Field<any, any, any, any, any, any> };
-
 type DefaultObjectValidationFn<
   ObjectFieldMap extends ObjectFieldBase
 > = ObjectValidationFn<
@@ -52,28 +68,11 @@ type ValidationOptionToValidationFn<
 
 type ObjectOptionsToDefaultOptions<
   ObjectFieldMap extends ObjectFieldBase,
-  Obj extends OptionsBase<ObjectFieldMap>
+  Options extends OptionsBase<ObjectFieldMap>
 > = {
-  validate: [Obj] extends [OptionsBaseNonNullable<ObjectFieldMap>]
-    ? ValidationOptionToValidationFn<ObjectFieldMap, Obj["validate"]>
+  validate: [Options] extends [OptionsBaseNonNullable<ObjectFieldMap>]
+    ? ValidationOptionToValidationFn<ObjectFieldMap, Options["validate"]>
     : DefaultObjectValidationFn<ObjectFieldMap>;
-};
-
-type ObjectValue<ObjectFieldMap extends ObjectFieldBase> = {
-  readonly [Key in keyof ObjectFieldMap]: FormValue<ObjectFieldMap[Key]>;
-};
-
-type ObjectValidatedInternalValue<ObjectFieldMap extends ObjectFieldBase> = {
-  readonly [Key in keyof ObjectFieldMap]: ValidationFunctionToValidatedValue<
-    ObjectValue<ObjectFieldMap>,
-    ObjectFieldMap[Key]["validate"]
-  >;
-};
-
-type ObjectValidationResults<ObjectFieldMap extends ObjectFieldBase> = {
-  readonly [Key in keyof ObjectFieldMap]: ReturnType<
-    ObjectFieldMap[Key]["validate"]
-  >;
 };
 
 type ObjectFieldMapToField<
@@ -126,28 +125,6 @@ type OptionsBase<ObjectFieldMap extends ObjectFieldBase> =
 type OptionsBaseNonNullable<ObjectFieldMap extends ObjectFieldBase> = {
   validate?: ObjectValidationFn<ObjectFieldMap>;
 };
-
-// ? ObjectValidationFn<
-//     ValidationResult<
-//       ObjectValueFromFieldMap<ObjectFieldMap>,
-//       {
-//         readonly [Key in keyof ObjectFieldMap]: ValidatedFormValue<
-//           ObjectFieldMap[Key]
-//         >;
-//       },
-//       {
-//         readonly [Key in keyof ObjectFieldMap]: FormValidationError<
-//           ObjectFieldMap[Key]
-//         >;
-//       }
-//     >,
-//     {
-//       readonly [Key in keyof ObjectFieldMap]: ReturnType<
-//         ObjectFieldMap[Key]["getInitialValue"]
-//       >;
-//     },
-//     any
-//   >
 
 export function object<
   ObjectFieldMap extends ObjectFieldBase,
