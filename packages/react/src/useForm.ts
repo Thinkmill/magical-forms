@@ -1,11 +1,11 @@
-import { InitialFieldValueInput, Field } from "./types";
+import { InitialFieldValueInput, Field, Form } from "./types";
 import { useState } from "react";
 import { runValidationFunction } from "./validation";
 
 export function useForm<FormField extends Field<any, any, any, any, any, any>>(
   field: FormField,
   initialValue?: InitialFieldValueInput<FormField>
-): ReturnType<FormField["getField"]> {
+): Form<FormField> {
   let [value, setValue] = useState(() => field.getInitialValue(initialValue));
   let [meta, setMeta] = useState(() => field.getInitialMeta(value));
 
