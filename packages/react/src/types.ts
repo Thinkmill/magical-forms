@@ -5,8 +5,9 @@ export type BasicFieldInput<
   ValidationError
 > = {
   setValue: (value: FieldValue) => void;
+
+  setState: (state: { value: FieldValue; meta: Meta }) => void;
   meta: Meta;
-  setMeta: (value: Meta) => void;
 } & ValidationResult<FieldValue, ValidatedValue, ValidationError>;
 
 export type Form<
@@ -77,6 +78,10 @@ export type Field<
     input: BasicFieldInput<Value, Meta, ValidatedValue, ValidationError>
   ) => Input;
   readonly validate: ValidationFn<Value, ValidatedValue, ValidationError>;
+  readonly getDerivedStateFromState?: (
+    newState: { value: Value; meta: Meta },
+    oldState: { value: Value; meta: Meta }
+  ) => { value: Value; meta: Meta };
 };
 
 export type BasicOptions<Value> = NonNullableBaseOptions<Value> | undefined;

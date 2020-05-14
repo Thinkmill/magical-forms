@@ -6,17 +6,33 @@ export function useForm<FormField extends Field<any, any, any, any, any, any>>(
   field: FormField,
   initialValue?: InitialFieldValueInput<FormField>
 ): Form<FormField> {
-  let [value, setValue] = useState(() => field.getInitialValue(initialValue));
-  let [meta, setMeta] = useState(() => field.getInitialMeta(value));
+  let [state, setState] = useState(() => {
+    let value = field.getInitialValue(initialValue);
+    return {
+      value,
+      meta: field.getInitialMeta(value),
+    };
+  });
 
   return field.getField({
-    ...runValidationFunction(field.validate, value),
+    ...runValidationFunction(field.validate, state.value),
     setValue: (val) => {
-      setValue(() => val);
+      setState((prev) =>
+        field.getDerivedStateFromState
+          ? field.getDerivedStateFromState(
+              { value: val, meta: prev.meta },
+              prev
+            )
+          : { value: val, meta: prev.meta }
+      );
     },
-    meta,
-    setMeta: (val) => {
-      setMeta(() => val);
+    setState: (val) => {
+      setState((prev) =>
+        field.getDerivedStateFromState
+          ? field.getDerivedStateFromState(val, prev)
+          : val
+      );
     },
+    meta: state.meta,
   });
 }

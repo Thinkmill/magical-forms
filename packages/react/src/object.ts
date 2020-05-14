@@ -58,10 +58,6 @@ type ObjectFieldMapToField<
     }
   | undefined,
   {
-    readonly props: {
-      value: SpecificCompositeTypes["value"];
-      onChange(value: SpecificCompositeTypes["value"]): void;
-    };
     readonly fields: {
       readonly [Key in keyof ObjectFieldMap]: ReturnType<
         ObjectFieldMap[Key]["getField"]
@@ -99,10 +95,6 @@ export function object<
     getField(input) {
       return {
         ...input,
-        props: {
-          value: input.value as ObjectValue<ObjectFieldMap>,
-          onChange: input.setValue,
-        },
         fields: mapObject(fields, (sourceKey, sourceValue) =>
           sourceValue.getField({
             ...runValidationFunction(
@@ -116,9 +108,10 @@ export function object<
               });
             },
             meta: input.meta.fields[sourceKey],
-            setMeta: (val: any) => {
-              input.setMeta({
-                fields: { ...input.meta.fields, [sourceKey]: val },
+            setState: (val) => {
+              input.setState({
+                value: { ...input.meta.fields, [sourceKey]: val },
+                meta: { fields: { ...input.meta.fields, [sourceKey]: val } },
               });
             },
           })
