@@ -2,7 +2,7 @@ import { BasicOptions, BasicField } from "./types";
 import { getDefaultValidate } from "./validation";
 
 export { object } from "./object";
-export { array } from "./array";
+// export { array } from "./array";
 
 export function scalar<ErrorType>() {
   return <ValueType, InputValueType, Props>(field: {
