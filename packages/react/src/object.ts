@@ -110,8 +110,10 @@ export function object<
             meta: input.meta.fields[sourceKey],
             setState: (val) => {
               input.setState({
-                value: { ...input.meta.fields, [sourceKey]: val },
-                meta: { fields: { ...input.meta.fields, [sourceKey]: val } },
+                value: { ...input.value, [sourceKey]: val.value },
+                meta: {
+                  fields: { ...input.meta.fields, [sourceKey]: val.meta },
+                },
               });
             },
           })
