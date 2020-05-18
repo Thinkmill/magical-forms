@@ -1,5 +1,11 @@
 # @magical-forms/react
 
+## 0.0.3
+
+### Patch Changes
+
+- [`d3200c7`](https://github.com/Thinkmill/magical-forms/commit/d3200c7a41f2ec5083338179073fe7b09c1b0c8e) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Add setValue to scalar fields
+
 ## 0.0.2
 
 ### Patch Changes
