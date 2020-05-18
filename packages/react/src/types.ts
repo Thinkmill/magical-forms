@@ -144,6 +144,7 @@ export type BasicField<
     >
   > & {
     props: Props;
+    setValue: (value: Value) => void;
   },
   Meta,
   ValidationFunctionToValidatedValue<
