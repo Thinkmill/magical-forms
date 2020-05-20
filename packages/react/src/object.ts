@@ -129,6 +129,7 @@ export function object<
         sourceValue.getInitialMeta(value[sourceKey])
       ),
     }),
+    // @ts-ignore
     validate: (value) => {
       let innerResult = mapObject(fields, (sourceKey, sourceValue) =>
         runValidationFunction(sourceValue.validate, value[sourceKey])
