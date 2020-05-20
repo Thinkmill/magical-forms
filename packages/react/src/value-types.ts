@@ -29,8 +29,9 @@ export function scalar<ErrorType>() {
       InputValueType
     > => {
       return {
-        getField: ({ setState, meta, ...input }) => ({
+        getField: ({ setState, setValue, meta, ...input }) => ({
           ...input,
+          setValue,
           // @ts-ignore
           props: field.props({
             ...input,
@@ -38,7 +39,7 @@ export function scalar<ErrorType>() {
               setState({ value: input.value, meta: { touched: true } });
             },
             onFocus: () => {},
-            onChange: input.setValue,
+            onChange: setValue,
           }),
         }),
         getInitialValue: field.initialValue,
