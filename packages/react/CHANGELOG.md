@@ -1,5 +1,11 @@
 # @magical-forms/react
 
+## 0.0.4
+
+### Patch Changes
+
+- [`d74e38c`](https://github.com/Thinkmill/magical-forms/commit/d74e38c51cda2f1fb09b689d54aac7bd8c55853c) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Add a ts-ignore comment for typescript@3.9
+
 ## 0.0.3
 
 ### Patch Changes
