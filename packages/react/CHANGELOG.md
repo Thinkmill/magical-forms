@@ -1,5 +1,11 @@
 # @magical-forms/react
 
+## 0.0.6
+
+### Patch Changes
+
+- [`ad607d0`](https://github.com/Thinkmill/magical-forms/commit/ad607d0663aac99bd03dafa540aec6c2118f4d09) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Fix incorrectly passing setValue to props
+
 ## 0.0.5
 
 ### Patch Changes
