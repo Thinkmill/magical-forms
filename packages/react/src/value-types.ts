@@ -19,7 +19,7 @@ export function scalar<ErrorType>() {
     ) => Props;
     initialValue: (inputInitialValue: InputValueType | undefined) => ValueType;
   }) => {
-    return <Options extends BasicOptions<string | undefined>>(
+    return <Options extends BasicOptions<ValueType>>(
       options?: Options
     ): BasicField<
       ValueType,
