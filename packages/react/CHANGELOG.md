@@ -1,5 +1,11 @@
 # @magical-forms/react
 
+## 0.0.5
+
+### Patch Changes
+
+- [`27aef9f`](https://github.com/Thinkmill/magical-forms/commit/27aef9ff19506ced1397e4e8a171ea544f59d1af) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Fix the value type of scalar fields always being `string | undefined`
+
 ## 0.0.4
 
 ### Patch Changes

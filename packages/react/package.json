@@ -1,6 +1,6 @@
 {
   "name": "@magical-forms/react",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "dist/react.cjs.js",
   "module": "dist/react.esm.js",
   "dependencies": {
