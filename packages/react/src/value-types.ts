@@ -12,6 +12,7 @@ export function scalar<ErrorType>() {
         onBlur: () => void;
         onChange: (value: ValueType) => void;
         value: ValueType;
+        meta: { touched: boolean };
       } & (
         | { validity: "valid"; error?: ErrorType }
         | { validity: "invalid"; error: ErrorType }
@@ -35,6 +36,7 @@ export function scalar<ErrorType>() {
           // @ts-ignore
           props: field.props({
             ...input,
+            meta,
             onBlur: () => {
               setState({ value: input.value, meta: { touched: true } });
             },
