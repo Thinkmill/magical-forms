@@ -1,5 +1,11 @@
 # @magical-forms/react
 
+## 0.0.7
+
+### Patch Changes
+
+- [`7d89aa1`](https://github.com/Thinkmill/magical-forms/commit/7d89aa1831034a62d59e8b41f1ba10f6a711e67e) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Expose meta to scalar fields
+
 ## 0.0.6
 
 ### Patch Changes
