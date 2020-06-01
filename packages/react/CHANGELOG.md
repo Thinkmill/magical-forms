@@ -1,5 +1,11 @@
 # @magical-forms/react
 
+## 0.1.0
+
+### Minor Changes
+
+- [`1cf6a3f`](https://github.com/Thinkmill/magical-forms/commit/1cf6a3f82d5a97d14ec3a8aaa2cc1e19103b2f41) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Make scalar and object fields introspectable
+
 ## 0.0.7
 
 ### Patch Changes
