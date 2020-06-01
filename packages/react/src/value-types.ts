@@ -30,6 +30,8 @@ export function scalar<ErrorType>() {
       InputValueType
     > => {
       return {
+        // @ts-ignore
+        type: "scalar",
         getField: ({ setState, setValue, meta, ...input }) => ({
           ...input,
           setValue,

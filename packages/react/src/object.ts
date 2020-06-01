@@ -92,6 +92,10 @@ export function object<
   ValidationErrorFromOptions<ObjectCompositeTypes<ObjectFieldMap>, Options>
 > {
   return {
+    // @ts-ignore
+    type: "object",
+    // @ts-ignore
+    fields,
     getField(input) {
       return {
         ...input,
