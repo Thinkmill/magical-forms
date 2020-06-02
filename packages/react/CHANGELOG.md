@@ -1,5 +1,11 @@
 # @magical-forms/react
 
+## 0.2.0
+
+### Minor Changes
+
+- [`361fb30`](https://github.com/Thinkmill/magical-forms/commit/361fb304c3441a604dfb218b2aac54c570c7e25d) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Add `stateFromChange` option
+
 ## 0.1.0
 
 ### Minor Changes
