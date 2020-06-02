@@ -41,7 +41,14 @@ type ObjectCompositeTypes<
 > = CompositeTypes<
   ObjectValue<ObjectFieldMap>,
   ObjectValidatedInternalValue<ObjectFieldMap>,
-  ObjectValidationResults<ObjectFieldMap>
+  ObjectValidationResults<ObjectFieldMap>,
+  {
+    readonly fields: {
+      readonly [Key in keyof ObjectFieldMap]: ReturnType<
+        ObjectFieldMap[Key]["getInitialMeta"]
+      >;
+    };
+  }
 >;
 
 type ObjectFieldMapToField<
@@ -68,13 +75,7 @@ type ObjectFieldMapToField<
     ValidatedValue,
     ValidationError
   >,
-  {
-    fields: {
-      readonly [Key in keyof ObjectFieldMap]: ReturnType<
-        ObjectFieldMap[Key]["getInitialMeta"]
-      >;
-    };
-  },
+  SpecificCompositeTypes["meta"],
   ValidatedValue,
   ValidationError
 >;
@@ -106,13 +107,32 @@ export function object<
               input.value[sourceKey]
             ),
             setValue: (val: any) => {
-              input.setValue({
-                ...input.value,
-                [sourceKey]: val,
+              let state = {
+                value: val,
+                meta: input.meta,
+              };
+              if (sourceValue.getDerivedStateFromState) {
+                state = sourceValue.getDerivedStateFromState(state, {
+                  value: input.value,
+                  meta: input.meta,
+                });
+              }
+
+              input.setState({
+                value: { ...input.value, [sourceKey]: state.value },
+                meta: {
+                  fields: { ...input.meta.fields, [sourceKey]: state.meta },
+                },
               });
             },
             meta: input.meta.fields[sourceKey],
             setState: (val) => {
+              if (sourceValue.getDerivedStateFromState) {
+                val = sourceValue.getDerivedStateFromState(val, {
+                  value: input.value,
+                  meta: input.meta,
+                });
+              }
               input.setState({
                 value: { ...input.value, [sourceKey]: val.value },
                 meta: {
@@ -124,6 +144,7 @@ export function object<
         ),
       };
     },
+    getDerivedStateFromState: options?.stateFromChange,
     getInitialValue: (initialValue = {}) =>
       mapObject(fields, (sourceKey, sourceValue) =>
         sourceValue.getInitialValue(initialValue[sourceKey])

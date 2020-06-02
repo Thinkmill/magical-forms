@@ -3,11 +3,13 @@ import { ValidationResult, ValidationFunctionToValidatedValue } from "./types";
 export type CompositeTypes<
   Value,
   InteralValidatedValue extends Value = Value,
-  InternalValidationResults = unknown
+  InternalValidationResults = unknown,
+  Meta = unknown
 > = {
   value: Value;
   internalValidated: InteralValidatedValue;
   internalValidationResults: InternalValidationResults;
+  meta: Meta;
 };
 
 export type ValidationFunctionToValidationError<
@@ -75,6 +77,19 @@ type OptionsBaseNonNullable<
   SpecificCompositeTypes extends CompositeTypes<unknown>
 > = {
   validate?: ObjectValidationFn<SpecificCompositeTypes>;
+  stateFromChange?: (
+    changedState: {
+      value: SpecificCompositeTypes["value"];
+      meta: SpecificCompositeTypes["meta"];
+    },
+    currentState: {
+      value: SpecificCompositeTypes["value"];
+      meta: SpecificCompositeTypes["meta"];
+    }
+  ) => {
+    value: SpecificCompositeTypes["value"];
+    meta: SpecificCompositeTypes["meta"];
+  };
 };
 
 export type ValidatedValueFromOptions<

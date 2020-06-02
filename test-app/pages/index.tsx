@@ -18,29 +18,42 @@ let textField = text({
 
     return validation.valid(value);
   },
+  stateFromChange: (changed, current) => {
+    if (changed.value === "something") {
+      return {
+        value: "no",
+        meta: current.meta,
+      };
+    }
+    return changed;
+  },
 });
 
-let testForm = types.object({
-  // thing: arrayField,
-  something: textField,
-  // another: text({
-  //   validate(val) {
-  //     if (val === undefined) return validation.invalid("yes" as const);
-  //     return validation.valid(val);
-  //   },
-  // }),
-  // other: field.select({
-  //   validate(value) {
-  //     if (value === undefined) return validation.invalid("required");
-  //     return validation.valid(value);
-  //   },
-  // }),
-});
+let testForm = types.object(
+  {
+    something: textField,
+    another: textField,
+  },
+  {
+    stateFromChange: (changed, current) => {
+      console.log(changed);
+      if (changed.value.another === "thing") {
+        console.log("yes");
+        return {
+          value: {
+            ...changed.value,
+            something: "wow",
+          },
+          meta: changed.meta,
+        };
+      }
+      return changed;
+    },
+  }
+);
 
 export default function Index() {
   let form = useForm(testForm);
-  console.log(form);
-
   return (
     <form
       onSubmit={(event) => {
@@ -55,9 +68,14 @@ export default function Index() {
         // }
       }}
     >
-      <input {...form.fields.something.props} />
-      {form.fields.something.validity}
-      {form.validity}
+      <label>
+        Something
+        <input {...form.fields.something.props} />
+      </label>
+      <label>
+        Another
+        <input {...form.fields.another.props} />
+      </label>
       {/* <RawTypes<typeof textField> /> */}
       <button disabled={form.validity !== "valid"}>Submit</button>
     </form>

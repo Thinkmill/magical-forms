@@ -49,6 +49,7 @@ export function scalar<ErrorType>() {
         getInitialValue: field.initialValue,
         getInitialMeta: () => ({ touched: false }),
         validate: getDefaultValidate(options),
+        getDerivedStateFromState: options?.stateFromChange,
       };
     };
   };

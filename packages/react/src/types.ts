@@ -87,6 +87,10 @@ export type Field<
 export type BasicOptions<Value> = NonNullableBaseOptions<Value> | undefined;
 
 type NonNullableBaseOptions<Value> = {
+  stateFromChange?: (
+    changedState: { value: Value; meta: { touched: boolean } },
+    currentState: { value: Value; meta: { touched: boolean } }
+  ) => { value: Value; meta: { touched: boolean } };
   validate?: ValidationFn<Value, Value, unknown> | undefined;
 };
 
