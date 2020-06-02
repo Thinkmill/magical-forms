@@ -92,6 +92,38 @@ export function object<
   ValidatedValueFromOptions<ObjectCompositeTypes<ObjectFieldMap>, Options>,
   ValidationErrorFromOptions<ObjectCompositeTypes<ObjectFieldMap>, Options>
 > {
+  let hasChildGetDerivedStateFromState = Object.values(fields).some(
+    (x) => x.getDerivedStateFromState
+  );
+  let getDerivedStateFromState: any;
+  if (!hasChildGetDerivedStateFromState && options?.stateFromChange) {
+    getDerivedStateFromState = options.stateFromChange;
+  } else if (hasChildGetDerivedStateFromState) {
+    getDerivedStateFromState = (changed: any, current: any) => {
+      let value: any = {};
+      let meta: any = {};
+      Object.keys(fields).forEach((key) => {
+        if (fields[key].getDerivedStateFromState) {
+          // @ts-ignore
+          let state = fields[key].getDerivedStateFromState(
+            { value: changed.value[key], meta: changed.meta.fields[key] },
+            { value: current.value[key], meta: current.meta.fields[key] }
+          );
+          value[key] = state.value;
+          value[key] = state.value;
+        } else {
+          value[key] = changed.value[key];
+          meta[key] = changed.meta.fields[key];
+        }
+      });
+      let state = { value, meta: { fields: meta } };
+      if (options?.stateFromChange) {
+        state = options.stateFromChange(state, current);
+      }
+      return state;
+    };
+  }
+
   return {
     // @ts-ignore
     type: "object",
@@ -144,7 +176,7 @@ export function object<
         ),
       };
     },
-    getDerivedStateFromState: options?.stateFromChange,
+    getDerivedStateFromState,
     getInitialValue: (initialValue = {}) =>
       mapObject(fields, (sourceKey, sourceValue) =>
         sourceValue.getInitialValue(initialValue[sourceKey])
