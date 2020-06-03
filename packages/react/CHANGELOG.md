@@ -1,5 +1,11 @@
 # @magical-forms/react
 
+## 0.2.3
+
+### Patch Changes
+
+- [`07565ca`](https://github.com/Thinkmill/magical-forms/commit/07565ca4ec3f31d0b39d28c6ad28a36378a09db5) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Actually fix the bug with stateFromChange
+
 ## 0.2.2
 
 ### Patch Changes
