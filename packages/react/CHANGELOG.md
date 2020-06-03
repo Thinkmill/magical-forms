@@ -1,5 +1,11 @@
 # @magical-forms/react
 
+## 0.2.2
+
+### Patch Changes
+
+- [`59390bc`](https://github.com/Thinkmill/magical-forms/commit/59390bcbf049af40d09e430012b56511e2a8fa03) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Fix a bug
+
 ## 0.2.1
 
 ### Patch Changes
