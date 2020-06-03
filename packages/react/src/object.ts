@@ -110,7 +110,7 @@ export function object<
             { value: current.value[key], meta: current.meta.fields[key] }
           );
           value[key] = state.value;
-          value[key] = state.value;
+          value[key] = state.meta;
         } else {
           value[key] = changed.value[key];
           meta[key] = changed.meta.fields[key];
