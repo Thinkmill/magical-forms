@@ -139,32 +139,10 @@ export function object<
               input.value[sourceKey]
             ),
             setValue: (val: any) => {
-              let state = {
-                value: val,
-                meta: input.meta,
-              };
-              if (sourceValue.getDerivedStateFromState) {
-                state = sourceValue.getDerivedStateFromState(state, {
-                  value: input.value,
-                  meta: input.meta,
-                });
-              }
-
-              input.setState({
-                value: { ...input.value, [sourceKey]: state.value },
-                meta: {
-                  fields: { ...input.meta.fields, [sourceKey]: state.meta },
-                },
-              });
+              input.setValue({ ...input.value, [sourceKey]: val });
             },
             meta: input.meta.fields[sourceKey],
             setState: (val) => {
-              if (sourceValue.getDerivedStateFromState) {
-                val = sourceValue.getDerivedStateFromState(val, {
-                  value: input.value,
-                  meta: input.meta,
-                });
-              }
               input.setState({
                 value: { ...input.value, [sourceKey]: val.value },
                 meta: {
