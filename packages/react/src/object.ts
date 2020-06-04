@@ -8,12 +8,7 @@ import {
   FormValue,
 } from "./types";
 import { runValidationFunction, validation } from "./validation";
-import {
-  OptionsBase,
-  ValidatedValueFromOptions,
-  ValidationErrorFromOptions,
-  CompositeTypes,
-} from "./composite-types";
+import { OptionsBase, CompositeTypes } from "./composite-types";
 
 type ObjectFieldBase = {
   [key: string]: Field<any, any, any, any, any, any>;
@@ -31,8 +26,8 @@ type ObjectValidatedInternalValue<ObjectFieldMap extends ObjectFieldBase> = {
 };
 
 type ObjectValidationResults<ObjectFieldMap extends ObjectFieldBase> = {
-  readonly [Key in keyof ObjectFieldMap]: ReturnType<
-    ObjectFieldMap[Key]["validate"]
+  readonly [Key in keyof ObjectFieldMap]: ValidationResult<
+    ReturnType<ObjectFieldMap[Key]["validate"]>
   >;
 };
 
@@ -53,9 +48,7 @@ type ObjectCompositeTypes<
 
 type ObjectFieldMapToField<
   ObjectFieldMap extends ObjectFieldBase,
-  SpecificCompositeTypes extends ObjectCompositeTypes<ObjectFieldMap>,
-  ValidatedValue extends SpecificCompositeTypes["value"],
-  ValidationError
+  SpecificCompositeTypes extends ObjectCompositeTypes<ObjectFieldMap>
 > = Field<
   SpecificCompositeTypes["value"],
   | {
@@ -72,12 +65,12 @@ type ObjectFieldMapToField<
     };
   } & ValidationResult<
     ObjectValue<ObjectFieldMap>,
-    ValidatedValue,
-    ValidationError
+    SpecificCompositeTypes["value"],
+    SpecificCompositeTypes["internalValidationResults"]
   >,
   SpecificCompositeTypes["meta"],
-  ValidatedValue,
-  ValidationError
+  SpecificCompositeTypes["value"],
+  SpecificCompositeTypes["internalValidationResults"]
 >;
 
 export function object<
@@ -86,12 +79,7 @@ export function object<
 >(
   fields: ObjectFieldMap,
   options?: Options
-): ObjectFieldMapToField<
-  ObjectFieldMap,
-  ObjectCompositeTypes<ObjectFieldMap>,
-  ValidatedValueFromOptions<ObjectCompositeTypes<ObjectFieldMap>, Options>,
-  ValidationErrorFromOptions<ObjectCompositeTypes<ObjectFieldMap>, Options>
-> {
+): ObjectFieldMapToField<ObjectFieldMap, ObjectCompositeTypes<ObjectFieldMap>> {
   let hasChildGetDerivedStateFromState = Object.values(fields).some(
     (x) => x.getDerivedStateFromState
   );
@@ -133,24 +121,35 @@ export function object<
       return {
         ...input,
         fields: mapObject(fields, (sourceKey, sourceValue) =>
-          sourceValue.getField({
-            ...runValidationFunction(
-              sourceValue.validate,
-              input.value[sourceKey]
-            ),
-            setValue: (val: any) => {
-              input.setValue({ ...input.value, [sourceKey]: val });
-            },
-            meta: input.meta.fields[sourceKey],
-            setState: (val) => {
-              input.setState({
-                value: { ...input.value, [sourceKey]: val.value },
-                meta: {
-                  fields: { ...input.meta.fields, [sourceKey]: val.meta },
-                },
-              });
-            },
-          })
+          sourceValue.getField(
+            // @ts-ignore
+            {
+              ...(input.validity === "valid" ||
+              input.error[sourceKey].validity === "valid"
+                ? {
+                    validity: "valid",
+                  }
+                : {
+                    validity: "invalid",
+                    // @ts-ignore
+                    error: input.error[sourceKey].error,
+                  }),
+              value: input.value[sourceKey],
+
+              setValue: (val: any) => {
+                input.setValue({ ...input.value, [sourceKey]: val });
+              },
+              meta: input.meta.fields[sourceKey],
+              setState: (val) => {
+                input.setState({
+                  value: { ...input.value, [sourceKey]: val.value },
+                  meta: {
+                    fields: { ...input.meta.fields, [sourceKey]: val.meta },
+                  },
+                });
+              },
+            }
+          )
         ),
       };
     },

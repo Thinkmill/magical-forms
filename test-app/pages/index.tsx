@@ -35,10 +35,24 @@ let testForm = types.object(
     another: textField,
   },
   {
+    validate: (result) => {
+      if (result.value.another === "wow" && result.value.something !== "wow") {
+        return {
+          validity: "invalid",
+          error: {
+            something:
+              result.validity === "valid"
+                ? validation.valid(result.value.something)
+                : result.error.something,
+            another: validation.invalid("Must also be wow"),
+          },
+        };
+      }
+      return result;
+    },
     stateFromChange: (changed, current) => {
       console.log(changed);
       if (changed.value.another === "thing") {
-        console.log("yes");
         return {
           value: {
             ...changed.value,

@@ -13,54 +13,14 @@ export type CompositeTypes<
 };
 
 export type ValidationFunctionToValidationError<
-  SpecificCompositeTypes extends CompositeTypes<unknown>,
-  ValidationFunction extends ObjectValidationFn<SpecificCompositeTypes>
-> = ValidationFunction extends ObjectValidationFn<
-  SpecificCompositeTypes,
-  SpecificCompositeTypes["value"],
-  infer ValidationError
->
-  ? ValidationError
-  : undefined;
+  SpecificCompositeTypes extends CompositeTypes<unknown>
+> = SpecificCompositeTypes["internalValidationResults"];
 
 type ObjectValidationFn<
-  SpecificCompositeTypes extends CompositeTypes<unknown>,
-  ValidatedValue extends SpecificCompositeTypes["value"] = SpecificCompositeTypes["value"],
-  ValidationError = unknown
+  SpecificCompositeTypes extends CompositeTypes<unknown>
 > = (
   value: PreviousResult<SpecificCompositeTypes>
-) =>
-  | { validity: "valid"; value: ValidatedValue }
-  | { validity: "invalid"; error: ValidationError };
-
-type DefaultObjectValidationFn<
-  SpecificCompositeTypes extends CompositeTypes<unknown>
-> = ObjectValidationFn<
-  SpecificCompositeTypes,
-  SpecificCompositeTypes["internalValidated"],
-  SpecificCompositeTypes["internalValidationResults"]
->;
-
-type ValidationOptionToValidationFn<
-  SpecificCompositeTypes extends CompositeTypes<unknown>,
-  ValidationFunction extends
-    | ObjectValidationFn<SpecificCompositeTypes>
-    | undefined
-> = [ValidationFunction] extends [ObjectValidationFn<SpecificCompositeTypes>]
-  ? ValidationFunction
-  : DefaultObjectValidationFn<SpecificCompositeTypes>;
-
-type ObjectOptionsToDefaultOptions<
-  SpecificCompositeTypes extends CompositeTypes<unknown>,
-  Options extends OptionsBase<SpecificCompositeTypes>
-> = {
-  validate: [Options] extends [OptionsBaseNonNullable<SpecificCompositeTypes>]
-    ? ValidationOptionToValidationFn<
-        SpecificCompositeTypes,
-        Options["validate"]
-      >
-    : DefaultObjectValidationFn<SpecificCompositeTypes>;
-};
+) => SpecificCompositeTypes["internalValidationResults"];
 
 type PreviousResult<
   SpecificCompositeTypes extends CompositeTypes<unknown>
@@ -91,19 +51,3 @@ type OptionsBaseNonNullable<
     meta: SpecificCompositeTypes["meta"];
   };
 };
-
-export type ValidatedValueFromOptions<
-  SpecificCompositeTypes extends CompositeTypes<unknown>,
-  Options extends OptionsBase<SpecificCompositeTypes>
-> = ValidationFunctionToValidatedValue<
-  SpecificCompositeTypes["value"],
-  ObjectOptionsToDefaultOptions<SpecificCompositeTypes, Options>["validate"]
->;
-
-export type ValidationErrorFromOptions<
-  SpecificCompositeTypes extends CompositeTypes<unknown>,
-  Options extends OptionsBase<SpecificCompositeTypes>
-> = ValidationFunctionToValidationError<
-  SpecificCompositeTypes,
-  ObjectOptionsToDefaultOptions<SpecificCompositeTypes, Options>["validate"]
->;
