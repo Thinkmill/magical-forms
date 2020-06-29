@@ -18,6 +18,7 @@ export type ScalarValidationResult<Value, ValidatedValue extends Value> =
 
 type FormPropsInput<Value> = {
   readonly value: Value;
+  readonly touched: boolean;
   readonly onBlur: () => void;
   readonly onFocus: () => void;
   readonly onChange: (value: Value) => void;
@@ -68,6 +69,7 @@ export function getScalarFieldInstance<TScalarField extends ScalarField>(
         });
       },
       onFocus: emptyFn,
+      touched: state.touched,
       ...validationResult,
     }),
     setState: (stateUpdate) => {

@@ -6,7 +6,7 @@ import {
 } from "./scalar";
 import { useState } from "react";
 import { mapObject } from "./map-obj";
-import { ValidationObj, ObjectField } from "./object";
+import { ObjectField } from "./object";
 import { getFieldInstance, getValueFromState } from "./utils";
 
 export { object } from "./object";
