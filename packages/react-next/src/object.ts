@@ -87,6 +87,7 @@ export type ObjectFieldInstance<TObjectField extends ObjectField<any>> = {
       TObjectField["fields"][Key]
     >;
   };
+  readonly _schema: TObjectField;
 } & (
   | {
       readonly validity: "valid";
@@ -156,6 +157,7 @@ export function getObjectFieldInstance(
     },
     validity: getFieldValidity(field, validationResult),
     value: getValueFromState(field, state),
+    _schema: field,
   };
 }
 

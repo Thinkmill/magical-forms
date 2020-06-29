@@ -46,6 +46,7 @@ export function getScalarFieldInstance<TScalarField extends ScalarField>(
   return {
     ...validationResult,
     state,
+    _schema: field,
     props: field.props({
       onBlur: () =>
         setState((prevState) => {
@@ -83,7 +84,12 @@ export function getScalarFieldInstance<TScalarField extends ScalarField>(
   };
 }
 
-export type ScalarFieldInstance<Field extends ScalarField> = {
+export type ScalarFieldInstance<
+  Field extends ScalarField
+> = ScalarValidationResult<
+  FormValueFromScalarField<Field>,
+  ValidatedFormValueFromScalarField<Field>
+> & {
   readonly props: ReturnType<Field["props"]>;
   readonly setState: (
     state:
@@ -93,10 +99,8 @@ export type ScalarFieldInstance<Field extends ScalarField> = {
         ) => ScalarState<FormValueFromScalarField<Field>>)
   ) => void;
   readonly state: ScalarState<FormValueFromScalarField<Field>>;
-} & ScalarValidationResult<
-  FormValueFromScalarField<Field>,
-  ValidatedFormValueFromScalarField<Field>
->;
+  readonly _schema: Field;
+};
 
 export type ScalarState<Value> = { value: Value; touched: boolean };
 
