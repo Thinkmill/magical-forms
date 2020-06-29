@@ -1,5 +1,11 @@
 # @magical-forms/react-next
 
+## 0.1.2
+
+### Patch Changes
+
+- [`2fabeb1`](https://github.com/Thinkmill/magical-forms/commit/2fabeb1115c83aca309cfd63dfff2b0d1495dec1) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Add touched to scalar field props function input
+
 ## 0.1.1
 
 ### Patch Changes
