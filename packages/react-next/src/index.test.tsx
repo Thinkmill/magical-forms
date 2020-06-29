@@ -33,24 +33,48 @@ test("validation order is correct", () => {
   let calls: string[] = [];
   let formSchema = object(
     {
-      thing: text({
-        validate: (value) => {
-          calls.push("inner");
-          if (value === "nope") {
-            return validation.invalid("nope inner");
-          }
-          return validation.valid(value);
+      something: object(
+        {
+          thing: text({
+            validate: (value) => {
+              calls.push("inner");
+              if (value === "nope") {
+                return validation.invalid("nope inner");
+              }
+              return validation.valid(value);
+            },
+          }),
         },
-      }),
+        {
+          validate: {
+            thing: (value, other) => {
+              expect(other).toEqual({
+                thing: value,
+              });
+
+              calls.push("middle");
+              if (value === "middle") {
+                return validation.invalid("nope middle");
+              }
+              return validation.valid(value);
+            },
+          },
+        }
+      ),
     },
     {
       validate: {
-        thing: (value) => {
-          calls.push("outer");
-          if (value === "outer") {
-            return validation.invalid("nope outer");
-          }
-          return validation.valid(value);
+        something: {
+          thing: (value, other) => {
+            expect(other).toEqual({
+              something: { thing: value },
+            });
+            calls.push("outer");
+            if (value === "outer") {
+              return validation.invalid("nope outer");
+            }
+            return validation.valid(value);
+          },
         },
       },
     }
@@ -64,9 +88,11 @@ test("validation order is correct", () => {
   if (!form) {
     throw new Error("form not rendered");
   }
-  expect(calls).toEqual(["inner", "outer"]);
+  expect(calls).toEqual(["inner", "middle", "outer"]);
   expect(form).toMatchInlineSnapshot(`
-        Object {
+    Object {
+      "fields": Object {
+        "something": Object {
           "fields": Object {
             "thing": Object {
               "error": undefined,
@@ -98,16 +124,35 @@ test("validation order is correct", () => {
           "value": Object {
             "thing": "",
           },
-        }
-    `);
+        },
+      },
+      "setState": [Function],
+      "state": Object {
+        "something": Object {
+          "thing": Object {
+            "touched": false,
+            "value": "",
+          },
+        },
+      },
+      "validity": "valid",
+      "value": Object {
+        "something": Object {
+          "thing": "",
+        },
+      },
+    }
+  `);
   calls = [];
   let oldForm = form;
   form = undefined;
   act(() => {
     oldForm.setState({
-      thing: {
-        touched: oldForm.state.thing.touched,
-        value: "nope",
+      something: {
+        thing: {
+          touched: oldForm.state.something.thing.touched,
+          value: "nope",
+        },
       },
     });
   });
@@ -116,39 +161,58 @@ test("validation order is correct", () => {
   }
   let newForm = (form as any) as Form<typeof formSchema>;
   expect(newForm.validity).toBe("invalid");
-  expect(newForm.fields.thing.error).toBe("nope inner");
+  expect(newForm.fields.something.fields.thing.error).toBe("nope inner");
   expect(newForm).toMatchInlineSnapshot(`
     Object {
       "fields": Object {
-        "thing": Object {
-          "error": "nope inner",
-          "props": Object {
-            "error": "nope inner",
-            "onBlur": [Function],
-            "onChange": [Function],
-            "onFocus": [Function],
-            "validity": "invalid",
-            "value": "nope",
+        "something": Object {
+          "fields": Object {
+            "thing": Object {
+              "error": "nope inner",
+              "props": Object {
+                "error": "nope inner",
+                "onBlur": [Function],
+                "onChange": [Function],
+                "onFocus": [Function],
+                "validity": "invalid",
+                "value": "nope",
+              },
+              "setState": [Function],
+              "state": Object {
+                "touched": false,
+                "value": "nope",
+              },
+              "validity": "invalid",
+              "value": "nope",
+            },
           },
           "setState": [Function],
           "state": Object {
-            "touched": false,
-            "value": "nope",
+            "thing": Object {
+              "touched": false,
+              "value": "nope",
+            },
           },
           "validity": "invalid",
-          "value": "nope",
+          "value": Object {
+            "thing": "nope",
+          },
         },
       },
       "setState": [Function],
       "state": Object {
-        "thing": Object {
-          "touched": false,
-          "value": "nope",
+        "something": Object {
+          "thing": Object {
+            "touched": false,
+            "value": "nope",
+          },
         },
       },
       "validity": "invalid",
       "value": Object {
-        "thing": "nope",
+        "something": Object {
+          "thing": "nope",
+        },
       },
     }
   `);

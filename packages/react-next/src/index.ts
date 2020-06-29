@@ -7,7 +7,7 @@ import {
 import { useState } from "react";
 import { mapObject } from "./map-obj";
 import { ValidationObj, ObjectField } from "./object";
-import { getFieldInstance } from "./utils";
+import { getFieldInstance, getValueFromState } from "./utils";
 
 export { object } from "./object";
 export { scalar } from "./scalar";
@@ -122,7 +122,11 @@ function getValidationResults(field: Field, state: any) {
     );
   }
   let validationObj = makeDefaultValidationObject(field.fields);
-  recursivelyAddValidators(validationObj, field);
+  recursivelyAddValidators(
+    validationObj,
+    field,
+    getValueFromState(field, state)
+  );
   return executeValidation(field, validationObj, state);
 }
 
@@ -156,26 +160,39 @@ function executeValidation(field: Field, validator: any, state: any) {
   );
 }
 
-function recursivelyAddValidators(validationObj: any, field: ObjectField<any>) {
+function recursivelyAddValidators(
+  validationObj: any,
+  field: ObjectField<any>,
+  value: any
+) {
   Object.keys(field.fields).forEach((key) => {
     if (field.fields[key].kind === "object") {
-      recursivelyAddValidators(validationObj[key], field.fields[key]);
+      recursivelyAddValidators(
+        validationObj[key],
+        field.fields[key],
+        value[key]
+      );
     }
   });
-  addValidators(validationObj, field.validate);
+  addValidators(validationObj, field.validate, value);
 }
 
 function addValidators(
   validationObject: any,
-  validationObjInput: ObjectField<any>["validate"] | undefined
+  validationObjInput: ObjectField<any>["validate"] | undefined,
+  value: any
 ) {
   if (validationObjInput) {
     Object.keys(validationObjInput).forEach((key) => {
-      if (typeof validationObjInput[key] === "function") {
-        validationObject[key].push(validationObjInput[key]);
+      const validationFuncOrObject = validationObjInput[key];
+
+      if (typeof validationFuncOrObject === "function") {
+        validationObject[key].push((val: any) => {
+          return validationFuncOrObject(val, value);
+        });
       }
       // @ts-ignore
-      addValidators(validationObject[key], validationObjInput[key]);
+      addValidators(validationObject[key], validationFuncOrObject, value);
     });
   }
 }
