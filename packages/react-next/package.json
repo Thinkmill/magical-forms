@@ -1,6 +1,6 @@
 {
   "name": "@magical-forms/react-next",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "main": "dist/react-next.cjs.js",
   "module": "dist/react-next.esm.js",
   "dependencies": {
