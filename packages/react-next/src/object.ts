@@ -75,7 +75,16 @@ export type InitialValueFromObjectField<
   Pick<Partial<Thing>, UndefinedKeys<Thing>> & Omit<Thing, UndefinedKeys<Thing>>
 >;
 
-export type ObjectFieldInstance<TObjectField extends ObjectField<any>> = {
+export type ObjectFieldInstance<TObjectField extends ObjectField<any>> = (
+  | {
+      readonly validity: "valid";
+      readonly value: ValidatedFormValueFromFieldsObj<TObjectField["fields"]>;
+    }
+  | {
+      readonly validity: "invalid";
+      readonly value: FormValueFromFieldsObj<TObjectField["fields"]>;
+    }
+) & {
   readonly setState: (
     object: Partial<FormStateFromFieldsObj<TObjectField["fields"]>>
   ) => void;
@@ -85,16 +94,8 @@ export type ObjectFieldInstance<TObjectField extends ObjectField<any>> = {
       TObjectField["fields"][Key]
     >;
   };
-} & (
-  | {
-      readonly validity: "valid";
-      readonly value: ValidatedFormValueFromFieldsObj<TObjectField["fields"]>;
-    }
-  | {
-      readonly validity: "invalid";
-      readonly value: FormValueFromFieldsObj<TObjectField["fields"]>;
-    }
-);
+  readonly _field: Field;
+};
 
 function getFieldValidity(
   field: Field,
@@ -154,6 +155,7 @@ export function getObjectFieldInstance(
     },
     validity: getFieldValidity(field, validationResult),
     value: getValueFromState(field, state),
+    _field: field,
   };
 }
 
