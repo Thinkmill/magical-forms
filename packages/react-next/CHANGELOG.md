@@ -1,5 +1,11 @@
 # @magical-forms/react-next
 
+## 0.1.4
+
+### Patch Changes
+
+- [`0982f00`](https://github.com/Thinkmill/magical-forms/commit/0982f00c6918a3af50d798d55c297d4d116de4f6) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Add \_field property to field instances
+
 ## 0.1.3
 
 ### Patch Changes
