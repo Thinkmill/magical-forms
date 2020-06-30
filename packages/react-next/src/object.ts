@@ -46,12 +46,10 @@ export type ValidationObj<FieldsObj, ObjectValue> = {
     : never;
 };
 
-export type ValidatedFormValueFromObjectField<
-  TObjectField extends ObjectField<any>
+export type ValidatedFormValueFromFieldsObj<
+  Fields extends { readonly [Key in keyof Fields]: Field }
 > = {
-  readonly [Key in TObjectField["fields"]]: ValidatedFormValue<
-    TObjectField["fields"][Key]
-  >;
+  readonly [Key in keyof Fields]: ValidatedFormValue<Fields[Key]>;
 };
 
 type ObjectFieldInitialInfoThing<TObjectField extends ObjectField<any>> = {
@@ -87,11 +85,10 @@ export type ObjectFieldInstance<TObjectField extends ObjectField<any>> = {
       TObjectField["fields"][Key]
     >;
   };
-  readonly _schema: TObjectField;
 } & (
   | {
       readonly validity: "valid";
-      readonly value: ValidatedFormValueFromObjectField<TObjectField>;
+      readonly value: ValidatedFormValueFromFieldsObj<TObjectField["fields"]>;
     }
   | {
       readonly validity: "invalid";
@@ -157,7 +154,6 @@ export function getObjectFieldInstance(
     },
     validity: getFieldValidity(field, validationResult),
     value: getValueFromState(field, state),
-    _schema: field,
   };
 }
 

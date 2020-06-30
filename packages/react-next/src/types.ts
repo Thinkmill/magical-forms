@@ -11,7 +11,7 @@ import {
   FormValueFromFieldsObj,
   FormStateFromFieldsObj,
   ObjectFieldInstance,
-  ValidatedFormValueFromObjectField,
+  ValidatedFormValueFromFieldsObj,
   InitialValueFromObjectField,
 } from "./object";
 
@@ -40,7 +40,7 @@ export type ValidatedFormValue<
 > = TField extends ScalarField
   ? ValidatedFormValueFromScalarField<TField>
   : TField extends ObjectField<any>
-  ? ValidatedFormValueFromObjectField<TField["fields"]>
+  ? ValidatedFormValueFromFieldsObj<TField["fields"]>
   : never;
 
 // maybe rename this to FormInstance
