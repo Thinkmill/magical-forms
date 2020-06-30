@@ -94,10 +94,60 @@ test("validation order is correct", () => {
   expect(calls).toEqual(["inner", "middle", "outer"]);
   expect(form).toMatchInlineSnapshot(`
     Object {
+      "_field": Object {
+        "fields": Object {
+          "something": Object {
+            "fields": Object {
+              "thing": Object {
+                "initialValue": [Function],
+                "kind": "scalar",
+                "props": [Function],
+                "stateFromChange": undefined,
+                "validate": [Function],
+              },
+            },
+            "kind": "object",
+            "stateFromChange": undefined,
+            "validate": Object {
+              "thing": [Function],
+            },
+          },
+        },
+        "kind": "object",
+        "stateFromChange": undefined,
+        "validate": Object {
+          "something": Object {
+            "thing": [Function],
+          },
+        },
+      },
       "fields": Object {
         "something": Object {
+          "_field": Object {
+            "fields": Object {
+              "thing": Object {
+                "initialValue": [Function],
+                "kind": "scalar",
+                "props": [Function],
+                "stateFromChange": undefined,
+                "validate": [Function],
+              },
+            },
+            "kind": "object",
+            "stateFromChange": undefined,
+            "validate": Object {
+              "thing": [Function],
+            },
+          },
           "fields": Object {
             "thing": Object {
+              "_field": Object {
+                "initialValue": [Function],
+                "kind": "scalar",
+                "props": [Function],
+                "stateFromChange": undefined,
+                "validate": [Function],
+              },
               "error": undefined,
               "props": Object {
                 "error": undefined,
@@ -168,10 +218,60 @@ test("validation order is correct", () => {
   expect(newForm.fields.something.fields.thing.error).toBe("nope inner");
   expect(newForm).toMatchInlineSnapshot(`
     Object {
+      "_field": Object {
+        "fields": Object {
+          "something": Object {
+            "fields": Object {
+              "thing": Object {
+                "initialValue": [Function],
+                "kind": "scalar",
+                "props": [Function],
+                "stateFromChange": undefined,
+                "validate": [Function],
+              },
+            },
+            "kind": "object",
+            "stateFromChange": undefined,
+            "validate": Object {
+              "thing": [Function],
+            },
+          },
+        },
+        "kind": "object",
+        "stateFromChange": undefined,
+        "validate": Object {
+          "something": Object {
+            "thing": [Function],
+          },
+        },
+      },
       "fields": Object {
         "something": Object {
+          "_field": Object {
+            "fields": Object {
+              "thing": Object {
+                "initialValue": [Function],
+                "kind": "scalar",
+                "props": [Function],
+                "stateFromChange": undefined,
+                "validate": [Function],
+              },
+            },
+            "kind": "object",
+            "stateFromChange": undefined,
+            "validate": Object {
+              "thing": [Function],
+            },
+          },
           "fields": Object {
             "thing": Object {
+              "_field": Object {
+                "initialValue": [Function],
+                "kind": "scalar",
+                "props": [Function],
+                "stateFromChange": undefined,
+                "validate": [Function],
+              },
               "error": "nope inner",
               "props": Object {
                 "error": "nope inner",
