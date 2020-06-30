@@ -14,10 +14,6 @@ export { scalar } from "./scalar";
 
 export * from "./types";
 
-// function executeForm(state:):Form<TField> {
-//
-// }
-
 export const validation = {
   valid<ValidValue>(value: ValidValue) {
     return { validity: "valid", value } as const;

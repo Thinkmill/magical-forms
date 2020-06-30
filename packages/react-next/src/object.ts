@@ -94,7 +94,7 @@ export type ObjectFieldInstance<TObjectField extends ObjectField<any>> = (
       TObjectField["fields"][Key]
     >;
   };
-  readonly _field: Field;
+  readonly _field: TObjectField;
 };
 
 function getFieldValidity(
