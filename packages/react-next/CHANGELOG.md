@@ -1,5 +1,11 @@
 # @magical-forms/react-next
 
+## 0.2.0
+
+### Minor Changes
+
+- [`d61e4c8`](https://github.com/Thinkmill/magical-forms/commit/d61e4c8905c4287b2938070b30eb1a4acc1ecb55) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Expose some more internal types
+
 ## 0.1.5
 
 ### Patch Changes
