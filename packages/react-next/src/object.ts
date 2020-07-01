@@ -25,7 +25,10 @@ export type FormStateFromFieldsObj<
   readonly [Key in keyof Fields]: FormState<Fields[Key]>;
 };
 
-type ValidationFnInObjectValidation<Field extends ScalarField, ObjectValue> = (
+export type ValidationFnInObjectValidation<
+  Field extends ScalarField,
+  ObjectValue
+> = (
   value: ValidatedFormValueFromScalarField<Field>,
   objectValue: ObjectValue
 ) =>

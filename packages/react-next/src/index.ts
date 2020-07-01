@@ -8,9 +8,10 @@ import { useState } from "react";
 import { mapObject } from "./map-obj";
 import { ObjectField } from "./object";
 import { getFieldInstance, getValueFromState } from "./utils";
-
+export type { ValidationFnInObjectValidation } from "./object";
 export { object } from "./object";
 export { scalar } from "./scalar";
+export type { ScalarField, ValidatedFormValueFromScalarField } from "./scalar";
 
 export * from "./types";
 
