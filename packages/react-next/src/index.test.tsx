@@ -8,6 +8,7 @@ import {
   ValidatedFormValue,
   FormState,
   FormValue,
+  resetForm,
 } from ".";
 import { render } from "@testing-library/react";
 import React from "react";
@@ -93,231 +94,245 @@ test("validation order is correct", () => {
   }
   expect(calls).toEqual(["inner", "middle", "outer"]);
   expect(form).toMatchInlineSnapshot(`
-    Object {
-      "_field": Object {
-        "fields": Object {
-          "something": Object {
-            "fields": Object {
-              "thing": Object {
-                "initialValue": [Function],
-                "kind": "scalar",
-                "props": [Function],
-                "stateFromChange": undefined,
-                "validate": [Function],
-              },
-            },
-            "kind": "object",
-            "stateFromChange": undefined,
-            "validate": Object {
-              "thing": [Function],
-            },
-          },
-        },
-        "kind": "object",
-        "stateFromChange": undefined,
-        "validate": Object {
-          "something": Object {
-            "thing": [Function],
-          },
-        },
-      },
-      "fields": Object {
-        "something": Object {
-          "_field": Object {
-            "fields": Object {
-              "thing": Object {
-                "initialValue": [Function],
-                "kind": "scalar",
-                "props": [Function],
-                "stateFromChange": undefined,
-                "validate": [Function],
-              },
-            },
-            "kind": "object",
-            "stateFromChange": undefined,
-            "validate": Object {
-              "thing": [Function],
-            },
-          },
-          "fields": Object {
-            "thing": Object {
-              "_field": Object {
-                "initialValue": [Function],
-                "kind": "scalar",
-                "props": [Function],
-                "stateFromChange": undefined,
-                "validate": [Function],
-              },
-              "error": undefined,
-              "props": Object {
-                "error": undefined,
-                "onBlur": [Function],
-                "onChange": [Function],
-                "onFocus": [Function],
-                "touched": false,
-                "validity": "valid",
-                "value": "",
-              },
-              "setState": [Function],
-              "state": Object {
-                "touched": false,
-                "value": "",
-              },
-              "validity": "valid",
-              "value": "",
-            },
-          },
-          "setState": [Function],
-          "state": Object {
-            "thing": Object {
-              "touched": false,
-              "value": "",
-            },
-          },
-          "validity": "valid",
-          "value": Object {
-            "thing": "",
-          },
-        },
-      },
-      "setState": [Function],
-      "state": Object {
-        "something": Object {
-          "thing": Object {
-            "touched": false,
-            "value": "",
-          },
-        },
-      },
-      "validity": "valid",
-      "value": Object {
-        "something": Object {
-          "thing": "",
-        },
-      },
-    }
-  `);
+                        Object {
+                          "_field": Object {
+                            "fields": Object {
+                              "something": Object {
+                                "fields": Object {
+                                  "thing": Object {
+                                    "initialValue": [Function],
+                                    "kind": "scalar",
+                                    "props": [Function],
+                                    "stateFromChange": undefined,
+                                    "validate": [Function],
+                                  },
+                                },
+                                "kind": "object",
+                                "stateFromChange": undefined,
+                                "validate": Object {
+                                  "thing": [Function],
+                                },
+                              },
+                            },
+                            "kind": "object",
+                            "stateFromChange": undefined,
+                            "validate": Object {
+                              "something": Object {
+                                "thing": [Function],
+                              },
+                            },
+                          },
+                          "fields": Object {
+                            "something": Object {
+                              "_field": Object {
+                                "fields": Object {
+                                  "thing": Object {
+                                    "initialValue": [Function],
+                                    "kind": "scalar",
+                                    "props": [Function],
+                                    "stateFromChange": undefined,
+                                    "validate": [Function],
+                                  },
+                                },
+                                "kind": "object",
+                                "stateFromChange": undefined,
+                                "validate": Object {
+                                  "thing": [Function],
+                                },
+                              },
+                              "fields": Object {
+                                "thing": Object {
+                                  "_field": Object {
+                                    "initialValue": [Function],
+                                    "kind": "scalar",
+                                    "props": [Function],
+                                    "stateFromChange": undefined,
+                                    "validate": [Function],
+                                  },
+                                  "error": undefined,
+                                  "props": Object {
+                                    "error": undefined,
+                                    "onBlur": [Function],
+                                    "onChange": [Function],
+                                    "onFocus": [Function],
+                                    "touched": false,
+                                    "validity": "valid",
+                                    "value": "",
+                                  },
+                                  "setState": [Function],
+                                  "state": Object {
+                                    "touched": false,
+                                    "value": "",
+                                  },
+                                  "validity": "valid",
+                                  "value": "",
+                                },
+                              },
+                              "setState": [Function],
+                              "state": Object {
+                                "thing": Object {
+                                  "touched": false,
+                                  "value": "",
+                                },
+                              },
+                              "validity": "valid",
+                              "value": Object {
+                                "thing": "",
+                              },
+                            },
+                          },
+                          "setState": [Function],
+                          "state": Object {
+                            "something": Object {
+                              "thing": Object {
+                                "touched": false,
+                                "value": "",
+                              },
+                            },
+                          },
+                          "validity": "valid",
+                          "value": Object {
+                            "something": Object {
+                              "thing": "",
+                            },
+                          },
+                        }
+            `);
   calls = [];
-  let oldForm = form;
-  form = undefined;
   act(() => {
-    oldForm.setState({
+    form!.setState({
       something: {
         thing: {
-          touched: oldForm.state.something.thing.touched,
+          touched: form!.state.something.thing.touched,
           value: "nope",
         },
       },
     });
   });
-  if (!form) {
-    throw new Error("form not rendered");
-  }
-  let newForm = (form as any) as Form<typeof formSchema>;
-  expect(newForm.validity).toBe("invalid");
-  expect(newForm.fields.something.fields.thing.error).toBe("nope inner");
-  expect(newForm).toMatchInlineSnapshot(`
+  expect(form.validity).toBe("invalid");
+  expect(form.fields.something.fields.thing.error).toBe("nope inner");
+  expect(form).toMatchInlineSnapshot(`
+                        Object {
+                          "_field": Object {
+                            "fields": Object {
+                              "something": Object {
+                                "fields": Object {
+                                  "thing": Object {
+                                    "initialValue": [Function],
+                                    "kind": "scalar",
+                                    "props": [Function],
+                                    "stateFromChange": undefined,
+                                    "validate": [Function],
+                                  },
+                                },
+                                "kind": "object",
+                                "stateFromChange": undefined,
+                                "validate": Object {
+                                  "thing": [Function],
+                                },
+                              },
+                            },
+                            "kind": "object",
+                            "stateFromChange": undefined,
+                            "validate": Object {
+                              "something": Object {
+                                "thing": [Function],
+                              },
+                            },
+                          },
+                          "fields": Object {
+                            "something": Object {
+                              "_field": Object {
+                                "fields": Object {
+                                  "thing": Object {
+                                    "initialValue": [Function],
+                                    "kind": "scalar",
+                                    "props": [Function],
+                                    "stateFromChange": undefined,
+                                    "validate": [Function],
+                                  },
+                                },
+                                "kind": "object",
+                                "stateFromChange": undefined,
+                                "validate": Object {
+                                  "thing": [Function],
+                                },
+                              },
+                              "fields": Object {
+                                "thing": Object {
+                                  "_field": Object {
+                                    "initialValue": [Function],
+                                    "kind": "scalar",
+                                    "props": [Function],
+                                    "stateFromChange": undefined,
+                                    "validate": [Function],
+                                  },
+                                  "error": "nope inner",
+                                  "props": Object {
+                                    "error": "nope inner",
+                                    "onBlur": [Function],
+                                    "onChange": [Function],
+                                    "onFocus": [Function],
+                                    "touched": false,
+                                    "validity": "invalid",
+                                    "value": "nope",
+                                  },
+                                  "setState": [Function],
+                                  "state": Object {
+                                    "touched": false,
+                                    "value": "nope",
+                                  },
+                                  "validity": "invalid",
+                                  "value": "nope",
+                                },
+                              },
+                              "setState": [Function],
+                              "state": Object {
+                                "thing": Object {
+                                  "touched": false,
+                                  "value": "nope",
+                                },
+                              },
+                              "validity": "invalid",
+                              "value": Object {
+                                "thing": "nope",
+                              },
+                            },
+                          },
+                          "setState": [Function],
+                          "state": Object {
+                            "something": Object {
+                              "thing": Object {
+                                "touched": false,
+                                "value": "nope",
+                              },
+                            },
+                          },
+                          "validity": "invalid",
+                          "value": Object {
+                            "something": Object {
+                              "thing": "nope",
+                            },
+                          },
+                        }
+            `);
+  act(() => {
+    resetForm(form, { something: { thing: "" } });
+  });
+  expect(form.value).toMatchInlineSnapshot(`
     Object {
-      "_field": Object {
-        "fields": Object {
-          "something": Object {
-            "fields": Object {
-              "thing": Object {
-                "initialValue": [Function],
-                "kind": "scalar",
-                "props": [Function],
-                "stateFromChange": undefined,
-                "validate": [Function],
-              },
-            },
-            "kind": "object",
-            "stateFromChange": undefined,
-            "validate": Object {
-              "thing": [Function],
-            },
-          },
-        },
-        "kind": "object",
-        "stateFromChange": undefined,
-        "validate": Object {
-          "something": Object {
-            "thing": [Function],
-          },
-        },
+      "something": Object {
+        "thing": "",
       },
-      "fields": Object {
-        "something": Object {
-          "_field": Object {
-            "fields": Object {
-              "thing": Object {
-                "initialValue": [Function],
-                "kind": "scalar",
-                "props": [Function],
-                "stateFromChange": undefined,
-                "validate": [Function],
-              },
-            },
-            "kind": "object",
-            "stateFromChange": undefined,
-            "validate": Object {
-              "thing": [Function],
-            },
-          },
-          "fields": Object {
-            "thing": Object {
-              "_field": Object {
-                "initialValue": [Function],
-                "kind": "scalar",
-                "props": [Function],
-                "stateFromChange": undefined,
-                "validate": [Function],
-              },
-              "error": "nope inner",
-              "props": Object {
-                "error": "nope inner",
-                "onBlur": [Function],
-                "onChange": [Function],
-                "onFocus": [Function],
-                "touched": false,
-                "validity": "invalid",
-                "value": "nope",
-              },
-              "setState": [Function],
-              "state": Object {
-                "touched": false,
-                "value": "nope",
-              },
-              "validity": "invalid",
-              "value": "nope",
-            },
-          },
-          "setState": [Function],
-          "state": Object {
-            "thing": Object {
-              "touched": false,
-              "value": "nope",
-            },
-          },
-          "validity": "invalid",
-          "value": Object {
-            "thing": "nope",
-          },
-        },
-      },
-      "setState": [Function],
-      "state": Object {
-        "something": Object {
-          "thing": Object {
-            "touched": false,
-            "value": "nope",
-          },
-        },
-      },
-      "validity": "invalid",
-      "value": Object {
-        "something": Object {
-          "thing": "nope",
-        },
+    }
+  `);
+  act(() => {
+    resetForm(form, { something: { thing: "something" } });
+  });
+  expect(form.value).toMatchInlineSnapshot(`
+    Object {
+      "something": Object {
+        "thing": "something",
       },
     }
   `);

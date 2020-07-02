@@ -192,20 +192,28 @@ function addValidators(
   }
 }
 
+export const resetForm: <TField extends Field>(
+  ...args: undefined extends InitialValueInput<TField>
+    ? [Form<TField>] | [Form<TField>, InitialValueInput<TField>]
+    : [Form<TField>, InitialValueInput<TField>]
+) => void = function (form: Form<Field>, initialValue: any) {
+  form.setState(getInitialValue(form._field, initialValue));
+} as any;
+
 export const useForm: <TField extends Field>(
   ...args: undefined extends InitialValueInput<TField>
     ? [TField] | [TField, InitialValueInput<TField>]
     : [TField, InitialValueInput<TField>]
-) => Form<TField> = function <TField extends Field>(
-  rootField: TField,
-  initialValue: InitialValueInput<TField>
+) => Form<TField> = function (
+  rootField: Field,
+  initialValue: InitialValueInput<Field>
 ) {
-  let [state, _setState] = useState<FormState<TField>>(() =>
+  let [state, _setState] = useState<FormState<Field>>(() =>
     getInitialValue(rootField, initialValue)
   );
 
   let setState = (
-    newStateDescription: (prevState: FormState<TField>) => FormState<TField>
+    newStateDescription: (prevState: FormState<Field>) => FormState<Field>
   ) => {
     _setState((prevState) => {
       let newState = newStateDescription(prevState);
