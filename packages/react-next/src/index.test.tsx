@@ -317,7 +317,7 @@ test("validation order is correct", () => {
                         }
             `);
   act(() => {
-    resetForm(form, { something: { thing: "" } });
+    resetForm(form!, { something: { thing: "" } });
   });
   expect(form.value).toMatchInlineSnapshot(`
     Object {
@@ -327,7 +327,7 @@ test("validation order is correct", () => {
     }
   `);
   act(() => {
-    resetForm(form, { something: { thing: "something" } });
+    resetForm(form!, { something: { thing: "something" } });
   });
   expect(form.value).toMatchInlineSnapshot(`
     Object {
