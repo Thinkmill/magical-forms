@@ -1,5 +1,11 @@
 # @magical-forms/react-next
 
+## 0.2.1
+
+### Patch Changes
+
+- [`2ea82a1`](https://github.com/Thinkmill/magical-forms/commit/2ea82a13f697ae2f2516717f49c87218b8944049) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Add `resetForm`
+
 ## 0.2.0
 
 ### Minor Changes
