@@ -1,8 +1,8 @@
 {
   "name": "@magical-forms/react",
   "version": "0.2.1",
-  "main": "dist/react-next.cjs.js",
-  "module": "dist/react-next.esm.js",
+  "main": "dist/react.cjs.js",
+  "module": "dist/react.esm.js",
   "dependencies": {
     "@babel/runtime": "^7.7.2"
   },
