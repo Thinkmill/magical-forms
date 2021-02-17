@@ -1,5 +1,5 @@
 {
-  "name": "@magical-forms/react-next",
+  "name": "@magical-forms/react",
   "version": "0.2.1",
   "main": "dist/react-next.cjs.js",
   "module": "dist/react-next.esm.js",
