@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from "react";
-import { types, useForm, validation } from "@magical-forms/react";
+import { scalar, useForm, object, validation } from "@magical-forms/react";
 
-const text = types.scalar<string>()({
+export const text = scalar({
   props: ({ onChange, validity, error, ...field }) => ({
     ...field,
     onChange(event: ChangeEvent<HTMLInputElement>) {
@@ -18,38 +18,21 @@ let textField = text({
 
     return validation.valid(value);
   },
-  stateFromChange: (changed, current) => {
-    if (changed.value === "something") {
+  stateFromChange: (current, next) => {
+    if (next.value === "something") {
       return {
-        value: "no",
-        meta: current.meta,
+        value: "else",
+        touched: true
       };
     }
-    return changed;
+    return next;
   },
 });
 
-let testForm = types.object(
-  {
+let testForm = object({
     something: textField,
     another: textField,
   },
-  {
-    stateFromChange: (changed, current) => {
-      console.log(changed);
-      if (changed.value.another === "thing") {
-        console.log("yes");
-        return {
-          value: {
-            ...changed.value,
-            something: "wow",
-          },
-          meta: changed.meta,
-        };
-      }
-      return changed;
-    },
-  }
 );
 
 export default function Index() {
