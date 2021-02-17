@@ -76,25 +76,17 @@ Magical Forms comes with these fields out of the box.
 ## Validation
 
 ```jsx
-// this is your form schema - you will generally define this outside of your component
-const loginForm = field.object({
-  email: field.text({
-    validate:
-  }),
-});
-
-const App = () => {
-  const form = useForm(loginForm);
-
-  return (
-    <div>
-      <InputComponent
-        label="Email"
-        {...form.fields.email.props}
-      />
-    </div>
-  );
-}
+  const questionForm = field.object({
+    capitalOfNewSouthWales: field.text({
+      validate: validate((value) => {
+        validate.required(value);
+        if (value !== 'Sydney') {
+          return validate.error("The answer is 'Sydney'");
+        }
+        return value;
+      }),
+    }),
+  });
 ```
 
 
