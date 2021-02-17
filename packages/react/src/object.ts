@@ -1,195 +1,200 @@
-import { mapObject } from "./map-obj";
-
 import {
+  ScalarField,
+  ValidatedFormValueFromScalarField,
+  ScalarValidationFn,
+} from "./scalar";
+import {
+  FormState,
   Field,
-  InitialFieldValueInput,
-  ValidationResult,
-  ValidationFunctionToValidatedValue,
   FormValue,
+  ValidatedFormValue,
+  InitialValueInput,
+  Form,
 } from "./types";
-import { runValidationFunction, validation } from "./validation";
-import {
-  OptionsBase,
-  ValidatedValueFromOptions,
-  ValidationErrorFromOptions,
-  CompositeTypes,
-} from "./composite-types";
+import { getValueFromState, getFieldInstance } from "./utils";
 
-type ObjectFieldBase = {
-  [key: string]: Field<any, any, any, any, any, any>;
+export type FormValueFromFieldsObj<
+  Fields extends { readonly [Key in keyof Fields]: Field }
+> = {
+  readonly [Key in keyof Fields]: FormValue<Fields[Key]>;
 };
 
-type ObjectValue<ObjectFieldMap extends ObjectFieldBase> = {
-  readonly [Key in keyof ObjectFieldMap]: FormValue<ObjectFieldMap[Key]>;
+export type FormStateFromFieldsObj<
+  Fields extends { readonly [Key in keyof Fields]: Field }
+> = {
+  readonly [Key in keyof Fields]: FormState<Fields[Key]>;
 };
 
-type ObjectValidatedInternalValue<ObjectFieldMap extends ObjectFieldBase> = {
-  readonly [Key in keyof ObjectFieldMap]: ValidationFunctionToValidatedValue<
-    ObjectValue<ObjectFieldMap>,
-    ObjectFieldMap[Key]["validate"]
-  >;
-};
-
-type ObjectValidationResults<ObjectFieldMap extends ObjectFieldBase> = {
-  readonly [Key in keyof ObjectFieldMap]: ReturnType<
-    ObjectFieldMap[Key]["validate"]
-  >;
-};
-
-type ObjectCompositeTypes<
-  ObjectFieldMap extends ObjectFieldBase
-> = CompositeTypes<
-  ObjectValue<ObjectFieldMap>,
-  ObjectValidatedInternalValue<ObjectFieldMap>,
-  ObjectValidationResults<ObjectFieldMap>,
-  {
-    readonly fields: {
-      readonly [Key in keyof ObjectFieldMap]: ReturnType<
-        ObjectFieldMap[Key]["getInitialMeta"]
-      >;
-    };
-  }
->;
-
-type ObjectFieldMapToField<
-  ObjectFieldMap extends ObjectFieldBase,
-  SpecificCompositeTypes extends ObjectCompositeTypes<ObjectFieldMap>,
-  ValidatedValue extends SpecificCompositeTypes["value"],
-  ValidationError
-> = Field<
-  SpecificCompositeTypes["value"],
+export type ValidationFnInObjectValidation<
+  Field extends ScalarField,
+  ObjectValue
+> = (
+  value: ValidatedFormValueFromScalarField<Field>,
+  objectValue: ObjectValue
+) =>
   | {
-      [Key in keyof ObjectFieldMap]?: InitialFieldValueInput<
-        ObjectFieldMap[Key]
-      >;
+      readonly validity: "valid";
+      readonly value: ValidatedFormValueFromScalarField<Field>;
     }
-  | undefined,
-  {
-    readonly fields: {
-      readonly [Key in keyof ObjectFieldMap]: ReturnType<
-        ObjectFieldMap[Key]["getField"]
-      >;
+  | {
+      readonly validity: "invalid";
+      readonly error: string;
     };
-  } & ValidationResult<
-    ObjectValue<ObjectFieldMap>,
-    ValidatedValue,
-    ValidationError
-  >,
-  SpecificCompositeTypes["meta"],
-  ValidatedValue,
-  ValidationError
+
+export type ValidationObj<FieldsObj, ObjectValue> = {
+  readonly [Key in keyof FieldsObj]?: FieldsObj[Key] extends ScalarField
+    ? ValidationFnInObjectValidation<FieldsObj[Key], ObjectValue>
+    : FieldsObj[Key] extends ObjectField<any>
+    ? ValidationObj<FieldsObj[Key]["fields"], ObjectValue>
+    : never;
+};
+
+export type ValidatedFormValueFromFieldsObj<
+  Fields extends { readonly [Key in keyof Fields]: Field }
+> = {
+  readonly [Key in keyof Fields]: ValidatedFormValue<Fields[Key]>;
+};
+
+type ObjectFieldInitialInfoThing<TObjectField extends ObjectField<any>> = {
+  [Key in keyof TObjectField["fields"]]: InitialValueInput<
+    TObjectField["fields"][Key]
+  >;
+};
+
+type UndefinedKeys<Obj extends object> = {
+  [Key in keyof Obj]: undefined extends Obj[Key] ? Key : never;
+}[keyof Obj];
+
+type AllowUndefinedIfEmptyObject<Thing extends {}> = {} extends Thing
+  ? undefined | Thing
+  : Thing;
+
+export type InitialValueFromObjectField<
+  TObjectField extends ObjectField<any>,
+  Thing extends ObjectFieldInitialInfoThing<
+    TObjectField
+  > = ObjectFieldInitialInfoThing<TObjectField>
+> = AllowUndefinedIfEmptyObject<
+  Pick<Partial<Thing>, UndefinedKeys<Thing>> & Omit<Thing, UndefinedKeys<Thing>>
 >;
+
+export type ObjectFieldInstance<TObjectField extends ObjectField<any>> = (
+  | {
+      readonly validity: "valid";
+      readonly value: ValidatedFormValueFromFieldsObj<TObjectField["fields"]>;
+    }
+  | {
+      readonly validity: "invalid";
+      readonly value: FormValueFromFieldsObj<TObjectField["fields"]>;
+    }
+) & {
+  readonly setState: (
+    object: Partial<FormStateFromFieldsObj<TObjectField["fields"]>>
+  ) => void;
+  readonly state: FormStateFromFieldsObj<TObjectField["fields"]>;
+  readonly fields: {
+    readonly [Key in keyof TObjectField["fields"]]: Form<
+      TObjectField["fields"][Key]
+    >;
+  };
+  readonly _field: TObjectField;
+};
+
+function getFieldValidity(
+  field: Field,
+  validationResult: any
+): "valid" | "invalid" {
+  if (field.kind === "scalar") {
+    return validationResult.validity;
+  }
+  return Object.keys(field.fields).every(
+    (key) =>
+      getFieldValidity(field.fields[key], validationResult[key]) === "valid"
+  )
+    ? "valid"
+    : "invalid";
+}
+
+export function getObjectFieldInstance(
+  field: ObjectField<any>,
+  state: FormStateFromFieldsObj<any>,
+  setState: (
+    state: (
+      prevState: FormStateFromFieldsObj<any>
+    ) => FormStateFromFieldsObj<any>
+  ) => void,
+  validationResult: any
+): ObjectFieldInstance<any> {
+  let fields: any = {};
+  Object.keys(field.fields).forEach((key) => {
+    fields[key] = getFieldInstance(
+      field.fields[key],
+      state[key],
+      (thing: any) => {
+        setState((prevState) => {
+          let newInnerState = thing(prevState[key]);
+          return {
+            ...prevState,
+            [key]: newInnerState,
+          };
+        });
+      },
+      validationResult[key]
+    );
+  });
+  return {
+    fields,
+    state,
+    setState: (partial) => {
+      setState((prevState) => {
+        let newState: any = { ...prevState };
+        Object.keys(partial).forEach((key) => {
+          if (partial[key] !== undefined) {
+            newState[key] = partial[key];
+          }
+        });
+        return newState;
+      });
+    },
+    validity: getFieldValidity(field, validationResult),
+    value: getValueFromState(field, state),
+    _field: field,
+  };
+}
+
+export type ObjectField<
+  Fields extends { readonly [Key in keyof Fields]: Field }
+> = {
+  readonly kind: "object";
+  readonly fields: Fields;
+  readonly validate:
+    | ValidationObj<Fields, FormValueFromFieldsObj<Fields>>
+    | undefined;
+  // this API is still def bad but meh
+  readonly stateFromChange:
+    | ((
+        current: FormStateFromFieldsObj<Fields>,
+        next: FormStateFromFieldsObj<Fields>
+      ) => FormStateFromFieldsObj<Fields>)
+    | undefined;
+};
 
 export function object<
-  ObjectFieldMap extends ObjectFieldBase,
-  Options extends OptionsBase<ObjectCompositeTypes<ObjectFieldMap>>
+  Fields extends { readonly [Key in keyof Fields]: Field }
 >(
-  fields: ObjectFieldMap,
-  options?: Options
-): ObjectFieldMapToField<
-  ObjectFieldMap,
-  ObjectCompositeTypes<ObjectFieldMap>,
-  ValidatedValueFromOptions<ObjectCompositeTypes<ObjectFieldMap>, Options>,
-  ValidationErrorFromOptions<ObjectCompositeTypes<ObjectFieldMap>, Options>
-> {
-  let hasChildGetDerivedStateFromState = Object.values(fields).some(
-    (x) => x.getDerivedStateFromState
-  );
-  let getDerivedStateFromState: any;
-  if (!hasChildGetDerivedStateFromState && options?.stateFromChange) {
-    getDerivedStateFromState = options.stateFromChange;
-  } else if (hasChildGetDerivedStateFromState) {
-    getDerivedStateFromState = (changed: any, current: any) => {
-      let value: any = {};
-      let meta: any = {};
-      Object.keys(fields).forEach((key) => {
-        if (fields[key].getDerivedStateFromState) {
-          // @ts-ignore
-          let state = fields[key].getDerivedStateFromState(
-            { value: changed.value[key], meta: changed.meta.fields[key] },
-            { value: current.value[key], meta: current.meta.fields[key] }
-          );
-          value[key] = state.value;
-          meta[key] = state.meta;
-        } else {
-          value[key] = changed.value[key];
-          meta[key] = changed.meta.fields[key];
-        }
-      });
-      let state = { value, meta: { fields: meta } };
-      if (options?.stateFromChange) {
-        state = options.stateFromChange(state, current);
-      }
-      return state;
-    };
+  fields: Fields,
+  options?: {
+    validate?: ValidationObj<Fields, FormValueFromFieldsObj<Fields>>;
+    stateFromChange?: (
+      current: FormStateFromFieldsObj<Fields>,
+      next: FormStateFromFieldsObj<Fields>
+    ) => FormStateFromFieldsObj<Fields>;
   }
-
+): ObjectField<Fields> {
   return {
-    // @ts-ignore
-    type: "object",
-    // @ts-ignore
+    kind: "object",
     fields,
-    getField(input) {
-      return {
-        ...input,
-        fields: mapObject(fields, (sourceKey, sourceValue) =>
-          sourceValue.getField({
-            ...runValidationFunction(
-              sourceValue.validate,
-              input.value[sourceKey]
-            ),
-            setValue: (val: any) => {
-              input.setValue({ ...input.value, [sourceKey]: val });
-            },
-            meta: input.meta.fields[sourceKey],
-            setState: (val) => {
-              input.setState({
-                value: { ...input.value, [sourceKey]: val.value },
-                meta: {
-                  fields: { ...input.meta.fields, [sourceKey]: val.meta },
-                },
-              });
-            },
-          })
-        ),
-      };
-    },
-    getDerivedStateFromState,
-    getInitialValue: (initialValue = {}) =>
-      mapObject(fields, (sourceKey, sourceValue) =>
-        sourceValue.getInitialValue(initialValue[sourceKey])
-      ),
-    getInitialMeta: (value) => ({
-      fields: mapObject(fields, (sourceKey, sourceValue) =>
-        sourceValue.getInitialMeta(value[sourceKey])
-      ),
-    }),
-    // @ts-ignore
-    validate: (value) => {
-      let innerResult = mapObject(fields, (sourceKey, sourceValue) =>
-        runValidationFunction(sourceValue.validate, value[sourceKey])
-      );
-      let areAllFieldsValid = Object.values(innerResult).every(
-        (value) => value.validity === "valid"
-      );
-      if (options === undefined || options.validate === undefined) {
-        return areAllFieldsValid
-          ? validation.valid(value)
-          : validation.invalid(innerResult);
-      }
-      return options.validate(
-        // @ts-ignore
-        areAllFieldsValid
-          ? {
-              validity: "valid" as const,
-              value,
-            }
-          : {
-              validity: "invalid",
-              value,
-              error: innerResult,
-            }
-      );
-    },
+    validate: options?.validate,
+    stateFromChange: options?.stateFromChange,
   };
 }
