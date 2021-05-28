@@ -1,5 +1,11 @@
 # @magical-forms/react-next
 
+## 0.2.2
+
+### Patch Changes
+
+- [`b6e56f6`](https://github.com/Thinkmill/magical-forms/commit/b6e56f6a523739deba7d82acfc148bbcb3596aa6) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Add `getInitialValue`
+
 ## 0.2.1
 
 ### Patch Changes
