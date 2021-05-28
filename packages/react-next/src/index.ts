@@ -45,7 +45,7 @@ export function getInitialValue<TField extends Field>(
   ...args: undefined extends InitialValueInput<TField>
     ? [TField] | [TField, InitialValueInput<TField>]
     : [TField, InitialValueInput<TField>]
-): FormValue<TField> {
+): FormState<TField> {
   // @ts-ignore
   return getInitialValueFromField(...args);
 }
