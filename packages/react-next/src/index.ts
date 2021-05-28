@@ -1,4 +1,4 @@
-import { Form, InitialValueInput, Field, FormState } from "./types";
+import { Form, InitialValueInput, Field, FormState, FormValue } from "./types";
 import {
   ScalarValidationFn,
   ScalarValidationResult,
@@ -41,13 +41,22 @@ function runValidationFunction<Value, ValidatedValue extends Value>(
   };
 }
 
-function getInitialValue(field: Field, initialValue: any): any {
+export function getInitialValue<TField extends Field>(
+  ...args: undefined extends InitialValueInput<TField>
+    ? [TField] | [TField, InitialValueInput<TField>]
+    : [TField, InitialValueInput<TField>]
+): FormValue<TField> {
+  // @ts-ignore
+  return getInitialValueFromField(...args);
+}
+
+function getInitialValueFromField(field: Field, initialValue: any): any {
   if (field.kind === "object") {
     if (initialValue === undefined) {
       initialValue = {};
     }
     return mapObject(field.fields, (key, value) => {
-      return getInitialValue(value, initialValue[key]);
+      return getInitialValueFromField(value, initialValue[key]);
     });
   }
   return {
@@ -197,7 +206,7 @@ export const resetForm: <TField extends Field>(
     ? [Form<TField>] | [Form<TField>, InitialValueInput<TField>]
     : [Form<TField>, InitialValueInput<TField>]
 ) => void = function (form: Form<Field>, initialValue: any) {
-  form.setState(getInitialValue(form._field, initialValue));
+  form.setState(getInitialValueFromField(form._field, initialValue));
 } as any;
 
 export const useForm: <TField extends Field>(
@@ -209,7 +218,7 @@ export const useForm: <TField extends Field>(
   initialValue: InitialValueInput<Field>
 ) {
   let [state, _setState] = useState<FormState<Field>>(() =>
-    getInitialValue(rootField, initialValue)
+    getInitialValueFromField(rootField, initialValue)
   );
 
   let setState = (
