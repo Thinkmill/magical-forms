@@ -41,7 +41,7 @@ function runValidationFunction<Value, ValidatedValue extends Value>(
   };
 }
 
-export function getInitialValue<TField extends Field>(
+export function getInitialState<TField extends Field>(
   ...args: undefined extends InitialValueInput<TField>
     ? [TField] | [TField, InitialValueInput<TField>]
     : [TField, InitialValueInput<TField>]
