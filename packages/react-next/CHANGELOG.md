@@ -1,5 +1,11 @@
 # @magical-forms/react-next
 
+## 0.2.3
+
+### Patch Changes
+
+- [`cafd7fb`](https://github.com/Thinkmill/magical-forms/commit/cafd7fb7c250139e9bda0125943fe4b60c155205) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Rename `getInitialValue` to `getInitialState` and fix the return type
+
 ## 0.2.2
 
 ### Patch Changes
