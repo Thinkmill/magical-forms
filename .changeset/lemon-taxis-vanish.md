@@ -2,4 +2,4 @@
 "@magical-forms/react-next": patch
 ---
 
-Fix return type of getInitialValue
+Rename `getInitialValue` to `getInitialState` and fix the return type
