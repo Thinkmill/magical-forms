@@ -15,10 +15,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 10.x
+      - name: Setup Node.js 14.x
         uses: actions/setup-node@master
         with:
-          version: 10.x
+          version: 14.x
 
       - name: Install Yarn
         run: npm install --global yarn
