@@ -1,8 +1,4 @@
-import {
-  ScalarField,
-  ValidatedFormValueFromScalarField,
-  ScalarValidationFn,
-} from "./scalar";
+import { ScalarField, ValidatedFormValueFromScalarField } from "./scalar";
 import {
   FormState,
   Field,
@@ -42,12 +38,17 @@ export type ValidationFnInObjectValidation<
     };
 
 export type ValidationObj<FieldsObj, ObjectValue> = {
-  readonly [Key in keyof FieldsObj]?: FieldsObj[Key] extends ScalarField
-    ? ValidationFnInObjectValidation<FieldsObj[Key], ObjectValue>
-    : FieldsObj[Key] extends ObjectField<any>
-    ? ValidationObj<FieldsObj[Key]["fields"], ObjectValue>
-    : never;
+  readonly [Key in keyof FieldsObj]?: ValidationObjInner<
+    FieldsObj[Key],
+    ObjectValue
+  >;
 };
+
+type ValidationObjInner<Field, ObjectValue> = Field extends ScalarField
+  ? ValidationFnInObjectValidation<Field, ObjectValue>
+  : Field extends ObjectField<any>
+  ? ValidationObj<Field["fields"], ObjectValue>
+  : never;
 
 export type ValidatedFormValueFromFieldsObj<
   Fields extends { readonly [Key in keyof Fields]: Field }
@@ -100,12 +101,21 @@ export type ObjectFieldInstance<TObjectField extends ObjectField<any>> = (
   readonly _field: TObjectField;
 };
 
-function getFieldValidity(
+export function getFieldValidity(
   field: Field,
   validationResult: any
 ): "valid" | "invalid" {
   if (field.kind === "scalar") {
     return validationResult.validity;
+  }
+  if (field.kind === "array") {
+    return (validationResult as any[]).every((validationResultElement) => {
+      return (
+        getFieldValidity(field.element, validationResultElement) === "valid"
+      );
+    })
+      ? "valid"
+      : "invalid";
   }
   return Object.keys(field.fields).every(
     (key) =>
@@ -173,8 +183,8 @@ export type ObjectField<
   // this API is still def bad but meh
   readonly stateFromChange:
     | ((
-        current: FormStateFromFieldsObj<Fields>,
-        next: FormStateFromFieldsObj<Fields>
+        next: FormStateFromFieldsObj<Fields>,
+        current?: FormStateFromFieldsObj<Fields>
       ) => FormStateFromFieldsObj<Fields>)
     | undefined;
 };
@@ -186,8 +196,8 @@ export function object<
   options?: {
     validate?: ValidationObj<Fields, FormValueFromFieldsObj<Fields>>;
     stateFromChange?: (
-      current: FormStateFromFieldsObj<Fields>,
-      next: FormStateFromFieldsObj<Fields>
+      next: FormStateFromFieldsObj<Fields>,
+      current?: FormStateFromFieldsObj<Fields>
     ) => FormStateFromFieldsObj<Fields>;
   }
 ): ObjectField<Fields> {

@@ -1,4 +1,12 @@
-import React from "react";
+---
+"@magical-forms/react-next": minor
+---
+
+Added `array` field which is similar to the `object` field except that you provide it a single field and it stores an array of that field(the field that's provided could be another array field, object field or scalar field). Unless you provide an initial value for an array field, it will default to an empty array.
+
+An example form:
+
+```jsx
 import {
   array,
   getInitialState,
@@ -10,12 +18,7 @@ import {
 
 const text = scalar({
   props: ({ onBlur, onChange, touched, error, value }) => {
-    return {
-      onChange,
-      onBlur,
-      value,
-      error: touched ? error : undefined,
-    };
+    return { onChange, onBlur, value, error: touched ? error : undefined };
   },
   initialValue: (input: string | undefined) => input || "",
 });
@@ -75,25 +78,10 @@ export default function Index() {
     </div>
   );
 }
+```
 
-function TextInput(props: {
-  value: string;
-  onChange(value: string): void;
-  onBlur(): void;
-  error?: string;
-}) {
-  return (
-    <div>
-      <input
-        value={props.value}
-        onBlur={() => {
-          props.onBlur();
-        }}
-        onChange={(event) => {
-          props.onChange(event.target.value);
-        }}
-      />
-      <div style={{ color: "red" }}>{props.error}</div>
-    </div>
-  );
-}
+Some important things going on here:
+
+- Like the fields inside of an `object` field are on `form.fields`, the fields inside of an `array` field are on `form.elements`
+- There is a `key` field, this is so that we have a consistent key to provide to React when removing/re-ordering elements. This isn't that important in this particular example but would be important if fields had components with their own state inside that should be preserved when removing/re-ordering elements.
+- When adding a new item, we can use `getInitialState(element)` to easily default the state of an element using the same logic that is used when doing `useForm(element)`

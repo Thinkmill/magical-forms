@@ -117,8 +117,8 @@ export type ScalarField<
   validate: TValidationFn;
   props: (input: FormPropsInput<Value>) => Props;
   stateFromChange?: (
-    current: ScalarState<Value>,
-    next: ScalarState<Value>
+    next: ScalarState<Value>,
+    current?: ScalarState<Value>
   ) => ScalarState<Value>;
   initialValue: (initialValue: InitialValue) => Value;
 };
@@ -126,8 +126,8 @@ export type ScalarField<
 type NonUndefinedScalarOptionsBase<Value> = {
   validate?: ScalarValidationFn<Value, Value>;
   stateFromChange?: (
-    current: ScalarState<Value>,
-    next: ScalarState<Value>
+    next: ScalarState<Value>,
+    current?: ScalarState<Value>
   ) => ScalarState<Value>;
 };
 
@@ -171,7 +171,6 @@ export function scalar<Value, InitialValueInput, Props>(scalarFieldOptions: {
     ValidationFnFromOptions<Value, Options>,
     Props
   > {
-    // @ts-ignore
     return {
       kind: "scalar",
       initialValue: scalarFieldOptions.initialValue,

@@ -1,14 +1,10 @@
 import { Form, InitialValueInput, Field, FormState, FormValue } from "./types";
-import {
-  ScalarValidationFn,
-  ScalarValidationResult,
-  ScalarField,
-} from "./scalar";
+import { ScalarValidationFn, ScalarValidationResult } from "./scalar";
 import { useState } from "react";
 import { mapObject } from "./map-obj";
-import { ObjectField } from "./object";
 import { getFieldInstance, getValueFromState } from "./utils";
 export * from "./object";
+export * from "./array";
 export * from "./scalar";
 
 export * from "./types";
@@ -42,12 +38,11 @@ function runValidationFunction<Value, ValidatedValue extends Value>(
 }
 
 export function getInitialState<TField extends Field>(
-  ...args: undefined extends InitialValueInput<TField>
-    ? [TField] | [TField, InitialValueInput<TField>]
-    : [TField, InitialValueInput<TField>]
+  rootField: TField,
+  ...initialValue: AllowEmptyIfUndefined<InitialValueInput<TField>>
 ): FormState<TField> {
   // @ts-ignore
-  return getInitialValueFromField(...args);
+  return getInitialValueFromField(rootField, initialValue[0]);
 }
 
 function getInitialValueFromField(field: Field, initialValue: any): any {
@@ -59,31 +54,64 @@ function getInitialValueFromField(field: Field, initialValue: any): any {
       return getInitialValueFromField(value, initialValue[key]);
     });
   }
+  if (field.kind === "array") {
+    if (initialValue === undefined) {
+      initialValue = [];
+    }
+    return (initialValue as any[]).map((element) => {
+      return getInitialValueFromField(field.element, element);
+    });
+  }
   return {
     touched: false,
     value: field.initialValue(initialValue),
   };
 }
 
-function getNewState(field: Field, newState: any, prevState: any) {
+function getNewState(
+  field: Field,
+  newState: any,
+  prevState: undefined | Record<string | number | symbol, any>
+): any {
   if (field.kind === "scalar") {
     if (field.stateFromChange) {
-      newState = field.stateFromChange(prevState, newState);
+      newState = field.stateFromChange(newState, prevState as any);
     }
     return newState;
+  }
+  if (field.kind === "array") {
+    let hasAElementDifferent = false;
+    let newArrayState = (newState as any[]).map((newStateElement, i) => {
+      let result = getNewState(field.element, newStateElement, prevState?.[i]);
+      hasAElementDifferent = hasAElementDifferent || result !== prevState?.[i];
+      return result;
+    });
+    if (field.stateFromChange) {
+      let storedNewArrayState = newArrayState;
+      newArrayState = field.stateFromChange(
+        newArrayState,
+        prevState as any
+      ) as any;
+      hasAElementDifferent =
+        hasAElementDifferent || newArrayState !== storedNewArrayState;
+    }
+    if (hasAElementDifferent) {
+      return newArrayState;
+    }
+    return prevState;
   }
   let newObjState: any = {};
   // we don't want to have a new reference if we don't need to
   // TODO: maybe optimise the calling of getNewState
   let hasAFieldDifferent = false;
   mapObject(field.fields, (key, field) => {
-    let result = getNewState(field, newState[key], prevState[key]);
-    hasAFieldDifferent = hasAFieldDifferent || result !== prevState[key];
+    let result = getNewState(field, newState[key], prevState?.[key]);
+    hasAFieldDifferent = hasAFieldDifferent || result !== prevState?.[key];
     newObjState[key] = result;
   });
   if (field.stateFromChange) {
     let storedNewObjState = newObjState;
-    newObjState = field.stateFromChange(newObjState, prevState);
+    newObjState = field.stateFromChange(newObjState, prevState as any);
     hasAFieldDifferent =
       hasAFieldDifferent || newObjState !== storedNewObjState;
   }
@@ -93,112 +121,126 @@ function getNewState(field: Field, newState: any, prevState: any) {
   return prevState;
 }
 
-function getValidationResultFromScalarField(
-  field: ScalarField,
-  value: any,
-  parentValidator: ScalarValidationFn<any, any>
-) {
-  return runValidationFunction((value) => {
-    let validationResult = field.validate(value);
-    if (validationResult.validity === "valid") {
-      return parentValidator(value);
-    }
-    return validationResult;
-  }, value);
-}
+type ObjectValidator = { [key: string]: Validator };
 
-function makeDefaultValidationObject(fields: any) {
+type Validator = ObjectValidator | Validator[] | ScalarValidationFn<any, any>;
+
+function makeBaseValidator<TField extends Field>(
+  field: TField,
+  value: any
+): Validator {
+  if (field.kind === "scalar") {
+    return field.validate;
+  }
+  if (field.kind === "array") {
+    return (value as any[]).map((val) => makeBaseValidator(field.element, val));
+  }
   let validationObject: Record<string, any> = {};
-  Object.keys(fields).forEach((key) => {
-    if (fields[key].kind === "object") {
-      validationObject[key] = makeDefaultValidationObject(fields[key].fields);
-    } else {
-      validationObject[key] = [];
-    }
+  Object.keys(field.fields).forEach((key) => {
+    validationObject[key] = makeBaseValidator(field.fields[key], value[key]);
   });
   return validationObject;
 }
 
 function getValidationResults(field: Field, state: any) {
-  if (field.kind === "scalar") {
-    return getValidationResultFromScalarField(field, state.value, (value) =>
-      validation.valid(value)
-    );
-  }
-  let validationObj = makeDefaultValidationObject(field.fields);
-  recursivelyAddValidators(
-    validationObj,
-    field,
-    getValueFromState(field, state)
-  );
-  return executeValidation(field, validationObj, state);
+  const value = getValueFromState(field, state);
+  let validator = makeBaseValidator(field, value);
+  validator = recursivelyAddValidators(validator, field, value);
+  return executeValidation(field, validator, state);
 }
 
-function executeValidation(field: Field, validator: any, state: any) {
+function executeValidation(
+  field: Field,
+  validator: Validator,
+  state: any
+): any {
   if (field.kind === "object") {
     let result: any = {};
     Object.keys(field.fields).forEach((key) => {
       result[key] = executeValidation(
         field.fields[key],
-        validator[key],
+        (validator as ObjectValidator)[key],
         state[key]
       );
     });
     return result;
   }
-  return getValidationResultFromScalarField(
-    field,
-    state.value,
-    validator.reduce(
-      (validateThing: any, item: any) => {
-        return (value: any) => {
-          let inner = validateThing(value);
-          if (inner.validity === "invalid") {
-            return inner;
-          }
-          return item(value);
-        };
-      },
-      (value: any) => validation.valid(value)
-    )
-  );
+  if (field.kind === "array") {
+    return (state as any[]).map((stateElement, i) => {
+      return executeValidation(
+        field.element,
+        (validator as Validator[])[i],
+        stateElement
+      );
+    });
+  }
+
+  return runValidationFunction((value) => {
+    return (validator as any)(value);
+  }, state.value);
 }
 
 function recursivelyAddValidators(
-  validationObj: any,
-  field: ObjectField<any>,
+  validator: Validator,
+  field: Field,
   value: any
-) {
-  Object.keys(field.fields).forEach((key) => {
-    if (field.fields[key].kind === "object") {
-      recursivelyAddValidators(
-        validationObj[key],
+): Validator {
+  if (field.kind === "array") {
+    validator = (validator as Validator[]).map((innerValidator, i) =>
+      recursivelyAddValidators(innerValidator, field.element, value[i])
+    );
+  }
+  if (field.kind === "object") {
+    Object.keys(field.fields).forEach((key) => {
+      (validator as ObjectValidator)[key] = recursivelyAddValidators(
+        (validator as ObjectValidator)[key],
         field.fields[key],
         value[key]
       );
-    }
-  });
-  addValidators(validationObj, field.validate, value);
+    });
+  }
+  if (field.kind === "scalar") {
+    return validator;
+  }
+  return addValidators(validator, field.validate as any, value);
 }
 
 function addValidators(
-  validationObject: any,
-  validationObjInput: ObjectField<any>["validate"] | undefined,
+  inputValidator: Validator,
+  validatorToAdd: any,
   value: any
-) {
-  if (validationObjInput) {
-    Object.keys(validationObjInput).forEach((key) => {
-      const validationFuncOrObject = validationObjInput[key];
-
-      if (typeof validationFuncOrObject === "function") {
-        validationObject[key].push((val: any) => {
-          return validationFuncOrObject(val, value);
-        });
+): Validator {
+  if (typeof inputValidator === "function") {
+    return (val: any) => {
+      const inner = inputValidator(val);
+      if (inner.validity === "invalid") {
+        return inner;
       }
-      // @ts-ignore
-      addValidators(validationObject[key], validationFuncOrObject, value);
+      return value === undefined
+        ? validatorToAdd(val)
+        : validatorToAdd(val, value);
+    };
+  }
+  if (Array.isArray(inputValidator)) {
+    return (inputValidator as Validator[]).map((inputValidator) => {
+      return addValidators(inputValidator, validatorToAdd, value);
     });
   }
+  if (
+    typeof inputValidator === "object" &&
+    typeof validatorToAdd === "object"
+  ) {
+    Object.keys(validatorToAdd).forEach((key) => {
+      const innerInputValidator = inputValidator[key];
+      const innerValidatorToAdd = validatorToAdd[key];
+      inputValidator[key] = addValidators(
+        innerInputValidator,
+        innerValidatorToAdd,
+        value
+      );
+    });
+  }
+  return inputValidator;
 }
 
 export const resetForm: <TField extends Field>(
@@ -206,13 +248,14 @@ export const resetForm: <TField extends Field>(
     ? [Form<TField>] | [Form<TField>, InitialValueInput<TField>]
     : [Form<TField>, InitialValueInput<TField>]
 ) => void = function (form: Form<Field>, initialValue: any) {
-  form.setState(getInitialValueFromField(form._field, initialValue));
+  (form.setState as any)(getInitialValueFromField(form._field, initialValue));
 } as any;
 
+type AllowEmptyIfUndefined<T> = (undefined extends T ? [] : never) | [T];
+
 export const useForm: <TField extends Field>(
-  ...args: undefined extends InitialValueInput<TField>
-    ? [TField] | [TField, InitialValueInput<TField>]
-    : [TField, InitialValueInput<TField>]
+  rootField: TField,
+  ...initialValue: AllowEmptyIfUndefined<InitialValueInput<TField>>
 ) => Form<TField> = function (
   rootField: Field,
   initialValue: InitialValueInput<Field>
