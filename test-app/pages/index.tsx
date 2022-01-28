@@ -72,6 +72,13 @@ export default function Index() {
       >
         Add Item
       </button>
+      <button
+        onClick={() => {
+          form.setState([]);
+        }}
+      >
+        Remove all
+      </button>
     </div>
   );
 }

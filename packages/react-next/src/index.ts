@@ -80,7 +80,7 @@ function getNewState(
     return newState;
   }
   if (field.kind === "array") {
-    let hasAElementDifferent = false;
+    let hasAElementDifferent = newState.length !== prevState?.length;
     let newArrayState = (newState as any[]).map((newStateElement, i) => {
       let result = getNewState(field.element, newStateElement, prevState?.[i]);
       hasAElementDifferent = hasAElementDifferent || result !== prevState?.[i];
