@@ -1,5 +1,11 @@
 # @magical-forms/react-next
 
+## 0.3.1
+
+### Patch Changes
+
+- [`72c9c66`](https://github.com/Thinkmill/magical-forms/commit/72c9c665f551633e47c45759f040d60d6d16eea4) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - Fixed setting array fields to an empty array not working
+
 ## 0.3.0
 
 ### Minor Changes
