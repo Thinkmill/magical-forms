@@ -790,3 +790,20 @@ test("validation order is correct with an array", () => {
     ]
   `);
 });
+
+test("setting array field to an empty array works", () => {
+  let formSchema = array(text());
+  let form: Form<typeof formSchema> | undefined;
+  function Comp() {
+    form = useForm(formSchema, ["blah"]);
+    return null;
+  }
+  render(<Comp />);
+  if (!form) {
+    throw new Error("form not rendered");
+  }
+  act(() => {
+    form!.setState([]);
+  });
+  expect(form.value).toEqual([]);
+});

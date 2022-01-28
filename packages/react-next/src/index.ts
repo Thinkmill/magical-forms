@@ -210,7 +210,10 @@ function addValidators(
   validatorToAdd: any,
   value: any
 ): Validator {
-  if (typeof inputValidator === "function") {
+  if (
+    typeof inputValidator === "function" &&
+    typeof validatorToAdd === "function"
+  ) {
     return (val: any) => {
       const inner = inputValidator(val);
       if (inner.validity === "invalid") {
