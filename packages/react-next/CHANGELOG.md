@@ -1,5 +1,11 @@
 # @magical-forms/react-next
 
+## 0.3.2
+
+### Patch Changes
+
+- [`3f69b45`](https://github.com/Thinkmill/magical-forms/commit/3f69b45abafdec1a747d7cad9f68fe9ed0301e5d) Thanks [@mitchellhamilton](https://github.com/mitchellhamilton)! - `setState` on `Form<Field>` is now a method so that `Form<ArrayField<Field>>` can be assigned to `Form<Field>`.
+
 ## 0.3.1
 
 ### Patch Changes
