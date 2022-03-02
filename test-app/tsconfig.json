@@ -11,7 +11,8 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "esModuleInterop": true,
-    "incremental": false
+    "incremental": false,
+    "strict": true
   },
   "exclude": ["node_modules"],
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"]

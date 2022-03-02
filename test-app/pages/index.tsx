@@ -1,6 +1,9 @@
 import React from "react";
 import {
   array,
+  ArrayField,
+  Field,
+  Form,
   getInitialState,
   object,
   scalar,
@@ -104,3 +107,9 @@ function TextInput(props: {
     </div>
   );
 }
+
+const a: Form<ArrayField<Field>> = undefined as any;
+
+const b: Form<Field> = a;
+
+console.log(b);

@@ -18,7 +18,7 @@ export type ArrayFieldInstance<TArrayField extends ArrayField<any>> = (
       readonly value: FormValue<TArrayField>;
     }
 ) & {
-  readonly setState: (elements: FormState<TArrayField>) => void;
+  setState(elements: FormState<TArrayField>): void;
   readonly state: FormState<TArrayField>;
   readonly elements: readonly Form<TArrayField["element"]>[];
   readonly _field: TArrayField;

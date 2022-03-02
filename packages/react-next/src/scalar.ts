@@ -91,13 +91,13 @@ export type ScalarFieldInstance<
   ValidatedFormValueFromScalarField<Field>
 > & {
   readonly props: ReturnType<Field["props"]>;
-  readonly setState: (
+  setState(
     state:
       | ScalarState<FormValueFromScalarField<Field>>
       | ((
           prevState: ScalarState<FormValueFromScalarField<Field>>
         ) => ScalarState<FormValueFromScalarField<Field>>)
-  ) => void;
+  ): void;
   readonly state: ScalarState<FormValueFromScalarField<Field>>;
   readonly _field: Field;
 };

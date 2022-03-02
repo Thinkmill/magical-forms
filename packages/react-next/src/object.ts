@@ -89,9 +89,9 @@ export type ObjectFieldInstance<TObjectField extends ObjectField<any>> = (
       readonly value: FormValueFromFieldsObj<TObjectField["fields"]>;
     }
 ) & {
-  readonly setState: (
+  setState(
     object: Partial<FormStateFromFieldsObj<TObjectField["fields"]>>
-  ) => void;
+  ): void;
   readonly state: FormStateFromFieldsObj<TObjectField["fields"]>;
   readonly fields: {
     readonly [Key in keyof TObjectField["fields"]]: Form<
